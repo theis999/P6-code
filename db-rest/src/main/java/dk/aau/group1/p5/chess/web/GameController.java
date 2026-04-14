@@ -28,7 +28,7 @@ public class GameController {
         return gameService.getAll();
     }
 
-    @GetMapping("/games/{id}")
+    @GetMapping("/games/{game_id}")
     public Game getGameById(@PathVariable Long game_id) {
         return gameService.get(game_id).orElseThrow(() -> new GameNotFoundException(game_id)); 
     }
