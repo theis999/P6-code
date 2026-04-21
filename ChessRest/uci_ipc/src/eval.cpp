@@ -68,3 +68,74 @@ std::vector<std::optional<Evaluation>> EngineWhisperer::getEvalsFromGame(const s
 
     return evals_out;
 }
+
+std::optional<Evaluation> EngineWhisperer::getEvalsFromFen(const std::string& fen) {
+
+    using namespace chess;
+
+    if (!engine_proc.running()) {
+        throw new engine_not_launched_exception("Engine not running.");
+    }
+    Board game_board{};
+
+    std::optional<Evaluation> eval_out{};
+    eval_out = naive_eval_from_position(fen);
+    game_board.setFen(fen);
+
+    PLOGD << fmt::format(FMT_COMPILE("{}"), eval_out->to_string());
+    std::pair<GameResultReason, GameResult> result = game_board.isGameOver();
+    eval_out->reason = result.first;
+    eval_out->res = result.second;
+    
+    if (game_board.sideToMove() == chess::Color::BLACK) {
+        eval_out->m_eval = -(eval_out->m_eval);
+    }
+
+
+    return eval_out;
+}
+
+std::vector<std::optional<FENMove>> EngineWhisperer::getFenListFromGame(const std::vector<chess::Move>& moves) {
+    PLOG_DEBUG << fmt::format(FMT_COMPILE("Getting evals from moves {}"), chess::uci::moveToUci(moves.at(0)));
+    using namespace chess;
+
+    if (!engine_proc.running()) {
+        throw new engine_not_launched_exception("Engine not running.");
+    }
+    Board game_board{};
+
+    std::vector<std::optional<FENMove>> fens_out{};
+    fens_out.reserve(moves.size());
+
+    new_game();
+
+    for (auto& m : moves) {
+        Movelist legal;
+        
+        const PieceGenType piecetype = piece_to_piecegen(game_board.at<PieceType>(m.from()));
+
+        movegen::legalmoves<movegen::MoveGenType::ALL>(legal, game_board, piecetype);
+        auto it = std::find(legal.begin(), legal.end(), m);
+
+        if (it == legal.end() /* Move was illegal*/) {
+            PLOGD << fmt::format(FMT_COMPILE("Illegal move {}."), uci::moveToUci(m));
+            fens_out.push_back({});
+            game_board.makeNullMove();
+            continue;            
+        }
+
+        game_board.makeMove(m);
+        
+        fens_out.push_back({game_board.getFen()});
+        
+        
+
+        /* if game_board says we are done, we are done. */
+        if (game_board.isGameOver().first != GameResultReason::NONE) {
+            break;
+        }
+    }
+
+    return fens_out;
+}
+

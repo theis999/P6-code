@@ -19,6 +19,18 @@
 #include <variant>
 
 /**
+ */
+class FENMove {
+public:
+
+    FENMove(){}
+    FENMove(std::string fen){
+        fen_string = fen;
+    }
+    std::string fen_string;
+};
+
+/**
  * Class that holds the evaluation of the position, and the "bestmove AxBy ponder CzDw" string from the engine. 
  * 
  */
@@ -276,6 +288,10 @@ public:
     std::optional<Evaluation> naive_eval_from_position(std::string_view fen);
 
     std::vector<std::optional<Evaluation>> getEvalsFromGame(const std::vector<chess::Move>& moves);
+
+    std::optional<Evaluation> getEvalsFromFen(const std::string& fen);
+
+    std::vector<std::optional<FENMove>> getFenListFromGame(const std::vector<chess::Move>& moves);
 };
 /**
 * @brief Exception thrown if operations that expect a running engine are done while the engine hasn't launched.

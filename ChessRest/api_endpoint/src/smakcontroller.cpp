@@ -51,5 +51,14 @@ oatpp::Object<models::EvalDTO> evalToDto(Evaluation e) {
     return out;
 }
 
+oatpp::Object<models::FenDTO> fenToDto(FENMove e) {
+    auto out = oatpp::Object<models::FenDTO>::createShared();
+    out->fen_string = e.fen_string;
+
+
+    return out;
+}
+
+
 
 }/* namespace smak::controller */

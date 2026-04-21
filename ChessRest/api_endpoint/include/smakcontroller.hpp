@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dtos/fenDTO.hpp"
+#include <string>
 #ifndef SMAK_SMAKCONTROLLER_HPP
 #define SMAK_SMAKCONTROLLER_HPP
 
@@ -25,6 +27,7 @@ namespace smak {
 namespace controller {
 
 oatpp::Object<models::EvalDTO> evalToDto(Evaluation e);
+oatpp::Object<models::FenDTO> fenToDto(FENMove e);
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -62,6 +65,123 @@ public:
   }
 
 public:
+  ADD_CORS(getFenList, "*", "GET",
+           "DNT, User-Agent, X-Requested-With, If-Modified-Since, "
+           "Cache-Control, Content-Type, Range",
+           "1728000");
+  ENDPOINT("GET", "/games/fen/{id}", getFenList, PATH(Int64, id)) {
+    EngineWhisperer ew("stockfish");
+    using namespace smak;
+    using namespace chess;
+
+    auto incoming_game = cl->getGameById(id);
+    //auto deb = incoming_game->readBodyToString();
+    //auto d = incoming_game->readBodyToDto<class Wrapper>(const base::ObjectHandle<data::mapping::ObjectMapper> &objectMapper)
+    auto dto = incoming_game->readBodyToDto<Object<models::GameDTO>>(
+        getDefaultObjectMapper());
+
+    if (incoming_game->getStatusCode() != Status::CODE_200.code) {
+      return createResponse(Status::CODE_503,
+                            "Unable to retrieve game from database.");
+    }
+
+    auto incoming_moves = cl->getMovesByGameId(id);
+    auto move_dtos =
+        incoming_moves->readBodyToDto<oatpp::Vector<Object<models::MoveDTO>>>(
+            getDefaultObjectMapper());
+
+    if (incoming_moves->getStatusCode() != Status::CODE_200.code) {
+      return createResponse(Status::CODE_503,
+                            "Unable to retrieve moves from database.");
+    }
+
+    std::vector<chess::Move> chess_moves{};
+    chess_moves.reserve(move_dtos->size());
+
+    auto int_to_square = [](int sq) {
+      chess::Rank r = 7 - (sq >> 3);
+      chess::File f = sq & 7;
+
+      return chess::Square(r, f);
+    };
+
+    for (auto &m_dto : *move_dtos) {
+
+      auto from = int_to_square(m_dto->from_square.getValue(0));
+      auto to = int_to_square(m_dto->to_square.getValue(0));
+
+      chess_moves.push_back(chess::Move::make(from, to));
+    }
+
+    //return createResponse(Status::CODE_503, "Unable to retrieve game from database.");
+      
+    Evaluation eval;
+    if (!ew.start_uci()) {
+      return createResponse(Status::CODE_503,
+                            "Engine could not start. Analysis unavailable.");
+    }
+
+    std::vector<std::optional<FENMove>> fens =
+        ew.getFenListFromGame(chess_moves);
+
+    auto fen_dtos = oatpp::Vector<Object<models::FenDTO>>::createShared();
+    fen_dtos->reserve(chess_moves.size());
+
+    for (auto &e : fens) {
+      size_t idx = fen_dtos->size();
+      if (e) {
+        auto dto = fenToDto(e.value());
+        dto->ply = idx + 1;
+        dto->id = id;
+        fen_dtos->push_back(dto);
+        if (chess_moves.size() > idx) {
+          fen_dtos->back()->move = chess::uci::moveToUci(chess_moves[idx]);
+        }
+      } else {
+        fen_dtos->push_back({});
+      }
+    }
+
+    return createDtoResponse(Status::CODE_200, fen_dtos);
+  }
+
+public:
+  ADD_CORS(getFenEval, "*", "POST",
+           "DNT, User-Agent, X-Requested-With, If-Modified-Since, "
+           "Cache-Control, Content-Type, Range",
+           "1728000");
+  ENDPOINT("POST", "/fen/eval", getFenEval, BODY_STRING(String, fen)) {
+    EngineWhisperer ew("stockfish");
+    using namespace smak;
+    using namespace chess;
+
+    Evaluation eval;
+    if (!ew.start_uci()) {
+      return createResponse(Status::CODE_503,
+                            "Engine could not start. Analysis unavailable.");
+    }
+
+    std::optional<Evaluation> e =
+        ew.getEvalsFromFen(fen);
+
+    auto eval_dtos = oatpp::Vector<Object<models::EvalDTO>>::createShared();
+
+
+    size_t idx = eval_dtos->size();
+    if (e) {
+      auto dto = evalToDto(e.value());
+      dto->ply = idx + 1;
+      eval_dtos->push_back(dto);
+      
+    } else {
+      eval_dtos->push_back({});
+    }
+  
+
+    return createDtoResponse(Status::CODE_200, eval_dtos);
+  }
+
+public:
   ADD_CORS(getGameEval, "*", "GET",
            "DNT, User-Agent, X-Requested-With, If-Modified-Since, "
            "Cache-Control, Content-Type, Range",
@@ -72,6 +192,8 @@ public:
     using namespace chess;
 
     auto incoming_game = cl->getGameById(id);
+    //auto deb = incoming_game->readBodyToString();
+    //auto d = incoming_game->readBodyToDto<class Wrapper>(const base::ObjectHandle<data::mapping::ObjectMapper> &objectMapper)
     auto dto = incoming_game->readBodyToDto<Object<models::GameDTO>>(
         getDefaultObjectMapper());
 

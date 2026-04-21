@@ -6,5 +6,6 @@
 #include <dtos/gameDTO.hpp>
 #include <dtos/moveDTO.hpp>
 #include <dtos/evalDTO.hpp>
+#include <dtos/fenDTO.hpp>
 
 #endif
