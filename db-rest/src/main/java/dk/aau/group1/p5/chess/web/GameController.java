@@ -28,14 +28,14 @@ public class GameController {
         return gameService.getAll();
     }
 
-    @GetMapping("/games/{game_id}")
-    public Game getGameById(@PathVariable Long game_id) {
-        return gameService.get(game_id).orElseThrow(() -> new GameNotFoundException(game_id)); 
+    @GetMapping("/games/{id}")
+    public Game getGameById(@PathVariable Long id) {
+        return gameService.get(id).orElseThrow(() -> new GameNotFoundException(id)); 
     }
 
     @PostMapping("/games")
     public Game addGame(@RequestBody Game new_game) {
-        if (new_game.getGamestart() == null) new_game.setGamestart(new Timestamp(System.currentTimeMillis()));
+        //if (new_game.getGamestart() == null) new_game.setGamestart(new Timestamp(System.currentTimeMillis()));
         return gameService.save(new_game);
     }
 

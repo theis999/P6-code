@@ -13,7 +13,7 @@ import dk.aau.group1.p5.chess.model.Move;
 public interface MoveRepository extends JpaRepository<Move, MoveId> {
     
     @Query(
-        value = "SELECT * FROM moves m WHERE m.id = ?1",
+        value = "SELECT * FROM moves m WHERE m.game_id = ?1",
         nativeQuery = true
     )
     public List<Move> getByGameId(Long id);
