@@ -153,7 +153,7 @@ async function getFen(id: number) {
 
         var movesstrings: string[] = [];
         result.forEach(ev => {
-            movesstrings.push(ev.move);
+            if (ev) movesstrings.push(ev.move);
         });
 
         populateMoveArray(movesstrings);
@@ -174,6 +174,7 @@ async function updateEvals(request_id: number) {
     try
     {
         for (var f of fens){
+            if (f === null) continue;
             let item : Evaluation = evals_dict[f.fen_string]
             if (item) console.debug("exists");
             else {
