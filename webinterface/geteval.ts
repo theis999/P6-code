@@ -32,6 +32,10 @@ var evals: Evaluation[] = [];
 var fens: Fen[] = [];
 var selected_id: number = 1;
 
+const host: string = "http://localhost:9090";
+
+var evals_dict: {[id: string] : Evaluation; } = {};
+
 
 function colorMoveTable(idx: number) {
     
@@ -132,7 +136,7 @@ function populateMovesTable(moves: Fen[]) {
 }
 
 async function getFen(id: number) {
-    const url: string = "http://localhost:9090/games/fen/" + id;
+    const url: string = host + "/games/fen/" + id;
     try {
         if (id <= 0) {
             throw new Error("0 or negative ID's are not allowed.");
@@ -164,23 +168,29 @@ async function getFen(id: number) {
 }
 
 async function updateEvals(request_id: number) {
-    const url: string = "http://localhost:9090/fen/eval";
+    const url: string = host + "/fen/eval";
     console.debug("updateEvals");
     console.debug(fens);
     try
     {
         for (var f of fens){
-            const response = await fetch(url, {method: 'POST',body: f.fen_string});
-            if (!response.ok) { throw new Error('Response did unnice thing: ${response.status}');}
-            const r: Evaluation[] = await response.json();
+            let item : Evaluation = evals_dict[f.fen_string]
+            if (item) console.debug("exists");
+            else {
+                const response = await fetch(url, {method: 'POST',body: f.fen_string});
+                if (!response.ok) { throw new Error('Response did unnice thing: ${response.status}');}
+                const r: Evaluation[] = await response.json();
 
-            console.log(r);
-            if (request_id != selected_id) break;
+                r[0].ply = f.ply;
+                evals_dict[f.fen_string] = item = r[0];
+                console.log(r);
+            }
 
-            r[0].ply = f.ply;
-            evals[f.ply - 1] = r[0];
+            //if (request_id != selected_id) break;
+
+            evals[f.ply - 1] = item;
             
-            move_array[f.ply] = r[0].move
+            //move_array[f.ply ] = item.move
 
         }
 
@@ -191,7 +201,7 @@ async function updateEvals(request_id: number) {
 
 async function getEval(id: number) {
     //const url: string = "http://p5webserv.head9x.dk:9090/games/eval/" + id;
-    const url: string = "http://localhost:9090/games/eval/" + id;
+    const url: string = host + "/games/eval/" + id;
 
     try {
         if (id <= 0) {
