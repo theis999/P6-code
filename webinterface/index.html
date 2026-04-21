@@ -146,6 +146,7 @@
             board.move(move_array[index]);
             index++;
             ply_counter.innerHTML = (index).toString();
+            clearEvalTbl();
             updateEvalTbl(index);
             colorMoveTable(index);
         })
@@ -172,6 +173,7 @@
             ply_counter.innerHTML = index.toString();
             //board.move(fools_mate[index])
             board.position(positions[index]);
+            clearEvalTbl();
             updateEvalTbl(index);
         })
 
@@ -185,8 +187,11 @@
             deleteMoves();
             clearEvalTbl();
         });
+var item;
+        $('form').on('submit', async function(event) {
+            item = this;
+            item[1].disabled = true;
 
-        $('form').on('submit', function(event) {
             event.preventDefault();
             positions = [];
             evals = [];
@@ -197,7 +202,12 @@
             clearEvalTbl();
             var formid = $("#gameidinput").first().val();
             const id = Number.parseInt(formid);            
-            getEval(id)
+            //getEval(id)
+            selected_id = id;
+            await getFen(id);
+            item[1].disabled = false;
+            await updateEvals(id);
+
         });
 
         $('#tblbtn').on('click', function(event) {

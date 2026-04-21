@@ -20,8 +20,18 @@ interface Move {
     to_square:      number;
 };
 
+interface Fen {
+    id:             number;
+    ply:            number;
+    fen_string:     string;
+    move:           string;
+}
+
 var move_array: string[] = [];
 var evals: Evaluation[] = [];
+var fens: Fen[] = [];
+var selected_id: number = 1;
+
 
 function colorMoveTable(idx: number) {
     
@@ -91,7 +101,7 @@ function deleteMoves() {
     }
 }
 
-function populateMovesTable(moves: Evaluation[]) {
+function populateMovesTable(moves: Fen[]) {
     var omovestable = document.getElementById("movestable");
     var moveno = 0;
     if (omovestable instanceof HTMLTableElement) {
@@ -103,7 +113,7 @@ function populateMovesTable(moves: Evaluation[]) {
             let numbercell = newmove.insertCell(0);
             let wcell = newmove.insertCell(1);
             let bcell = newmove.insertCell(2);
-           
+
             numbercell.innerHTML = moveno.toString() + ".";
             //let btn_w = "<button class='clickable' style='outline: 0; background-color: transparent; border-color: transparent;'>" + move_w +"</button>"
             let btn_w = "<button onclick='jumpToMove(" + i.toString() + ")' class='clickable'>"+ move_w + "</button>"
@@ -121,10 +131,67 @@ function populateMovesTable(moves: Evaluation[]) {
     }
 }
 
+async function getFen(id: number) {
+    const url: string = "http://localhost:9090/games/fen/" + id;
+    try {
+        if (id <= 0) {
+            throw new Error("0 or negative ID's are not allowed.");
+        }
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Response did unnice thing: ${response.status}');
+        }
+
+        const result: Fen[] = await response.json();
+        console.log(result);
+
+        fens = result;
+
+        var movesstrings: string[] = [];
+        result.forEach(ev => {
+            movesstrings.push(ev.move);
+        });
+
+        populateMoveArray(movesstrings);
+
+        populateMovesTable(result);
+
+    }
+    catch (error: any)
+    {
+        console.log(error);
+    }
+}
+
+async function updateEvals(request_id: number) {
+    const url: string = "http://localhost:9090/fen/eval";
+    console.debug("updateEvals");
+    console.debug(fens);
+    try
+    {
+        for (var f of fens){
+            const response = await fetch(url, {method: 'POST',body: f.fen_string});
+            if (!response.ok) { throw new Error('Response did unnice thing: ${response.status}');}
+            const r: Evaluation[] = await response.json();
+
+            console.log(r);
+            if (request_id != selected_id) break;
+
+            r[0].ply = f.ply;
+            evals[f.ply - 1] = r[0];
+            
+            move_array[f.ply] = r[0].move
+
+        }
+
+    } catch (error: any){
+        console.log(error);
+    }
+}
 
 async function getEval(id: number) {
-    const url: string = "http://p5webserv.head9x.dk:9090/games/eval/" + id;
-    //const url: string = "http://localhost:9090/games/eval/" + id;
+    //const url: string = "http://p5webserv.head9x.dk:9090/games/eval/" + id;
+    const url: string = "http://localhost:9090/games/eval/" + id;
 
     try {
         if (id <= 0) {
@@ -147,7 +214,7 @@ async function getEval(id: number) {
 
         populateMoveArray(movesstrings);
 
-        populateMovesTable(result);
+        //populateMovesTable(result);
         
 
     } catch (error: any) {
@@ -179,6 +246,8 @@ function updateEvalTbl(plyno: number) {
         let cls = secondrow.cells
         
         let a = evals[plyno-1];
+        console.log("eval");
+        console.log(a);
         if (!a) {
             return;
         }
