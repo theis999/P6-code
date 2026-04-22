@@ -56,7 +56,7 @@ function colorMoveTable(idx: number) {
             let cellcount = r.cells.length;
             for (let j = 1; j < cellcount; j++) {
                 if (r.cells) {
-                    r.cells.item(j)!.style.backgroundColor = "White";
+                    r.cells.item(j)!.classList.remove("cell-select");
                 }
             } 
         }
@@ -64,7 +64,7 @@ function colorMoveTable(idx: number) {
 
     var row = movestable.rows.item(Math.floor((idx+1)/2));
     if ((Math.floor(idx+1)/2) < 1) {
-        movestable.rows.item(2)!.cells.item(1)!.style.backgroundColor = "White";
+        movestable.rows.item(2)!.cells.item(1)!.classList.remove("cell-select");
         console.error("Illegal index");
         return;
     }
@@ -77,7 +77,7 @@ function colorMoveTable(idx: number) {
     console.log("cellno = " + cellno);
 
     let target_cell = row!.cells.item(cellno);
-    target_cell!.style.backgroundColor = "DarkSeaGreen";
+    target_cell!.classList.add("cell-select");
 
 }
 
