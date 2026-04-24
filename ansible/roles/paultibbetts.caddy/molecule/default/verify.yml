@@ -1,0 +1,26 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+  tasks:
+    - name: Check Caddy binary exists
+      ansible.builtin.stat:
+        path: "{{ caddy_bin_path }}"
+      register: caddy_binary
+
+    - name: Assert Caddy binary is present and executable
+      ansible.builtin.assert:
+        that:
+          - caddy_binary.stat.exists
+          - caddy_binary.stat.executable
+        fail_msg: "Caddy binary is missing or not executable"
+
+    - name: Check Caddy service is active
+      ansible.builtin.command: "systemctl is-active {{ caddy_service_name }}"
+      changed_when: false
+
+    - name: Check Caddy responds to version command
+      ansible.builtin.command: "{{ caddy_bin_path }} version"
+      changed_when: false

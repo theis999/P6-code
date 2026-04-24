@@ -1,0 +1,38 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: caddy-rpi-ubuntu-2204
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    platform: linux/arm64
+    command: /lib/systemd/systemd
+    user: root
+    privileged: true
+    pre_build_image: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp:rw,mode=1777
+
+provisioner:
+  name: ansible
+  inventory:
+    host_vars:
+      caddy-rpi-ubuntu-2204:
+        ansible_connection: community.docker.docker
+        ansible_user: root
+        ansible_python_interpreter: /usr/bin/python3
+        ansible_remote_tmp: /tmp/.ansible/tmp
+        caddy_install_method: download
+        caddy_plugins:
+          - github.com/caddy-dns/cloudflare
+        caddy_caddyfile_template: "{{ playbook_dir }}/templates/Caddyfile.j2"
+
+verifier:
+  name: ansible

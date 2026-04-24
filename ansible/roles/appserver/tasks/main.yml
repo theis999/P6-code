@@ -1,0 +1,18 @@
+- name: Include modified caddy role
+  ansible.builtin.include_role:
+    name: paultibbetts.caddy
+  vars:
+    caddy_caddyfile_template: "{{ playbook_dir }}/../roles/appserver/templates/Caddyfile.j2"
+    caddy_install_method: download
+    caddy_plugins:
+      - github.com/greenpau/caddy-security
+    caddy_manage_systemd_env_file: true
+
+- name: Database endpoint deployment
+  include_tasks: dbendpoint.yml
+
+- name: Webinterface deployment
+  include_tasks: webinterface.yml
+
+- name: Analysis/pgndpoint deployment
+  include_tasks: pgndpoint.yml

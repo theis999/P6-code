@@ -1,0 +1,6 @@
+---
+- name: Deploy authentik
+  hosts: database
+  become: true
+  roles:
+    - authentik

@@ -1,0 +1,8 @@
+- name: Validate Caddyfile
+  ansible.builtin.command: "caddy validate --config {{ caddy_config_path }}"
+  changed_when: false
+
+- name: Reload Caddy
+  ansible.builtin.service:
+    name: "{{ caddy_service }}"
+    state: reloaded

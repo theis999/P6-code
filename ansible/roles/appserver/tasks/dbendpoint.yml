@@ -1,0 +1,94 @@
+- name: Mark /opt/SMAK as safe git directory for root
+  community.general.git_config:
+    name: safe.directory
+    value: "{{ repo_dest }}"
+    scope: global
+    state: present
+
+- name: Clone or update Git repository
+  ansible.builtin.git:
+    repo: "{{ repo_url }}"
+    dest: "{{ repo_dest }}"
+    version: main
+    force: true
+
+- name: Ensure username correct
+  ansible.builtin.lineinfile:
+    path: "{{ file_to_modify }}"
+    regexp: '^spring.datasource.username='
+    line: 'spring.datasource.username={{ smak_username }}'
+    create: true
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Ensure password correct
+  ansible.builtin.lineinfile:
+    path: "{{ file_to_modify }}"
+    regexp: '^spring.datasource.password='
+    line: 'spring.datasource.password={{ smak_password }}'
+    create: true
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Ensure password correct
+  ansible.builtin.lineinfile:
+    path: "{{ file_to_modify }}"
+    regexp: '^spring.datasource.url='
+    line: 'spring.datasource.url=jdbc:mariadb://192.168.50.18:3306/smak'
+    create: true
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Ensure mvnw is executable
+  ansible.builtin.file:
+    path: "{{ app_dir }}/mvnw"
+    mode: "0755"
+
+- name: Run Maven package (skip tests)
+  ansible.builtin.command: ./mvnw package -Dmaven.test.skip=true
+  args:
+    chdir: "{{ app_dir }}"
+  register: mvn_result
+  changed_when: "'BUILD SUCCESS' in mvn_result.stdout"
+
+- name: Show Maven output (optional)
+  ansible.builtin.debug:
+    var: mvn_result.stdout_lines
+
+    # Create non-root user for safety
+- name: Ensure app user exists
+  ansible.builtin.user:
+    name: smak
+    shell: /bin/bash
+
+    # Repo must belong to smak so the app can run correctly
+- name: Ensure repo ownership
+  ansible.builtin.file:
+    path: "{{ repo_dest }}"
+    owner: smak
+    group: smak
+    recurse: true
+
+- name: Copy smakdb service to host
+  become: true
+  become_user: root
+  ansible.builtin.copy:
+    src: ./templates/smakdbendpoint.service
+    dest: "/etc/systemd/system/smakdbendpoint.service"
+    mode: "0777"
+
+- name: Enable smakdbendpoint service
+  become: true
+  become_user: root
+  ansible.builtin.systemd_service:
+    name: smakdbendpoint
+    enabled: yes
+    
+- name: Start service smakdbendpoint
+  ansible.builtin.systemd_service:
+    name: smakdbendpoint
+    daemon_reload: true
+    state: restarted

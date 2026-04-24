@@ -1,0 +1,70 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  tasks:
+    - name: Stop and mask apt daily services and timers (Ubuntu systemd containers)
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+        masked: true
+        daemon_reload: true
+      loop:
+        - apt-daily.service
+        - apt-daily.timer
+        - apt-daily-upgrade.service
+        - apt-daily-upgrade.timer
+      when: ansible_facts.os_family == "Debian"
+      ignore_errors: true
+
+    - name: Configure apt for containerized CI (avoid hangs)
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/99molecule
+        mode: "0644"
+        content: |
+          APT::Periodic::Enable "0";
+          APT::Periodic::Update-Package-Lists "0";
+          APT::Periodic::Download-Upgradeable-Packages "0";
+          Acquire::ForceIPv4 "true";
+          Acquire::Retries "3";
+          Dpkg::Lock::Timeout "300";
+      when: ansible_facts.os_family == "Debian"
+
+    - name: Stop any running apt/dpkg processes (best effort)
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - pkill -9 -x apt.systemd.daily
+        - pkill -9 -x apt-get
+        - pkill -9 -x apt
+        - pkill -9 -x dpkg
+      when: ansible_facts.os_family == "Debian"
+      changed_when: false
+      failed_when: false
+
+    - name: Wait for apt/dpkg locks to clear (best effort)
+      ansible.builtin.shell: |
+        for i in $(seq 1 60); do
+          if ! fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock >/dev/null 2>&1; then
+            exit 0
+          fi
+          sleep 1
+        done
+        exit 0
+      args:
+        executable: /bin/sh
+      when: ansible_facts.os_family == "Debian"
+      changed_when: false
+      failed_when: false
+
+    - name: Remove apt/dpkg lock files (best effort)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/apt/lists/lock
+        - /var/cache/apt/archives/lock
+        - /var/lib/dpkg/lock
+        - /var/lib/dpkg/lock-frontend
+      when: ansible_facts.os_family == "Debian"
+      ignore_errors: true

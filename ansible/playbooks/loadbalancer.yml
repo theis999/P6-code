@@ -1,0 +1,5 @@
+- name: Configure Caddy
+  hosts: loadbalancer
+  become: true
+  roles:
+    - loadbalancer

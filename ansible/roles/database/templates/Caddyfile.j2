@@ -1,0 +1,34 @@
+{
+{% if caddy_email|length %}
+  email {{ caddy_email }}
+{% endif %}
+  # Optional global defaults:
+  # admin off
+  # log {
+  #   output file /var/log/caddy/access.log
+  # }
+}
+
+{% for site in caddy_sites %}
+{{ site.listen }} {
+{% if site.reverse_proxy is defined %}
+  reverse_proxy {{ site.reverse_proxy }}
+{% endif %}
+
+{% if site.root is defined %}
+  root * {{ site.root }}
+{% endif %}
+
+{% if site.file_server|default(false) %}
+  file_server
+{% endif %}
+
+{% if site.extra_headers is defined and site.extra_headers|length > 0 %}
+  header {
+{% for h in site.extra_headers %}
+    {{ h }}
+{% endfor %}
+  }
+{% endif %}
+}
+{% endfor %}

@@ -1,0 +1,32 @@
+- name: Create authentik directory
+  ansible.builtin.file:
+    path: "{{ authentik_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download authentik compose.yml
+  ansible.builtin.get_url:
+    url: "{{ authentik_compose_url }}"
+    dest: "{{ authentik_dir }}/compose.yml"
+    mode: "0644"
+
+- name: Render authentik .env
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ authentik_dir }}/.env"
+    mode: "0600"
+
+- name: Pull images (optional)
+  community.docker.docker_compose_v2:
+    project_src: "{{ authentik_dir }}"
+    files:
+      - compose.yml
+    pull: always
+  when: authentik_pull | bool
+
+- name: Start authentik
+  community.docker.docker_compose_v2:
+    project_src: "{{ authentik_dir }}"
+    files:
+      - compose.yml
+    state: present

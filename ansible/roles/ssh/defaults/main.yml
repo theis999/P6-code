@@ -1,0 +1,7 @@
+ansible_pubkey:
+  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBKzrh3bKiZyQctl3v1SWmVaxikx0WP830lycLP4phZz morten@MSO-PC-Debian \n
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ9xo+W4xw1xJmtoMsd4Dr4LPJdOYPqSYUyhT2wGBePD frede@HEAD9XDesktop \n
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEvBc0WWp2iru8P7HeuwGV7DybggvjTCWpAlgYYIC+m9 wt13df@student.aau.dk \n
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINYaBIwpqe+/T2Arm3eQ34qQHF3rTln/wSNgqVUeHbLh u0_a483@localhost-kejsphone \n
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPvcwegi/b/X7xDib2SvtSlFdiuKkcMqFOU5VjjTzIhk theis@h018488.wifi.general.client.rdns.aau.dk"
+

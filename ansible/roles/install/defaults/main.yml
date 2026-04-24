@@ -1,0 +1,28 @@
+packages:
+  - curl
+  - docker-ce 
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+  - git
+  - screen
+  - zip
+  - unzip
+
+db_packages:
+  - mariadb-server
+  - python3-pymysql
+
+appserver_packages:
+  - node-typescript
+  - build-essential
+  - cmake
+  - clang
+  - ninja-build
+  - acl # Access Control Lists - for use with unpriv-unpriv ansible
+  - stockfish
+
+docker_repo_uri: "https://download.docker.com/linux/debian"
+docker_keyring_path: "/etc/apt/keyrings/docker.asc"
+docker_sources_path: "/etc/apt/sources.list.d/docker.sources"

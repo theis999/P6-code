@@ -1,0 +1,96 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Install Caddy
+  ansible.builtin.import_tasks: install.yaml
+  when: caddy_state == "present"
+
+- name: Uninstall Caddy
+  ansible.builtin.import_tasks: uninstall.yaml
+  when: caddy_state == "absent"
+
+- name: Configure Caddy
+  when: caddy_state == "present"
+  block:
+    - name: Ensure config directory exists
+      ansible.builtin.file:
+        path: "{{ caddy_config_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure systemd drop-in directory exists
+      ansible.builtin.file:
+        path: "/etc/systemd/system/{{ caddy_service_name }}.service.d"
+        state: directory
+        mode: "0755"
+
+    - name: Configure systemd environment drop-in
+      ansible.builtin.template:
+        src: 10-env.conf.j2
+        dest: "/etc/systemd/system/{{ caddy_service_name }}.service.d/10-env.conf"
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Restart caddy
+
+    - name: Manage Caddy systemd environment file
+      ansible.builtin.copy:
+        dest: "{{ caddy_systemd_env_file_path }}"
+        owner: root
+        group: root
+        mode: "0600"
+        content: |
+          {% for item in caddy_systemd_env | dict2items %}
+          {{ item.key }}={{ item.value }}
+          {% endfor %}
+      no_log: true
+      when:
+        - caddy_manage_systemd_env_file
+        - caddy_systemd_env | length > 0
+      notify: Restart caddy
+
+    - name: Ensure log directory exists
+      ansible.builtin.file:
+        path: "{{ caddy_log_path }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ caddy_user_name }}"
+        group: "{{ caddy_group_name }}"
+
+    - name: Deploy Caddyfile
+      ansible.builtin.template:
+        src: "{{ caddy_caddyfile_template }}"
+        dest: "{{ caddy_config_path }}/Caddyfile"
+        mode: "0644"
+      no_log: true
+      notify: Reload caddy
+      when: caddy_caddyfile_template | default('') | length > 0
+
+    - name: Manage Caddy service
+      ansible.builtin.service:
+        name: "{{ caddy_service_name }}"
+        state: "{{ caddy_service_state }}"
+        enabled: "{{ caddy_service_enabled }}"
+      when:
+        - caddy_manage_service
+        - caddy_install_method == "apt"
+          or (caddy_caddyfile_template | default('') | length > 0)
+          or caddy_service_state == "stopped"
+          or not caddy_service_enabled
+
+    - name: Check Caddy binary exists
+      ansible.builtin.stat:
+        path: "{{ caddy_bin_path }}"
+      register: caddy_bin_stat
+
+    - name: Fail if Caddy binary is missing
+      ansible.builtin.assert:
+        that:
+          - caddy_bin_stat.stat.exists
+        fail_msg: >-
+          Caddy binary not found at {{ caddy_bin_path }}.
+          Verify caddy_install_method={{ caddy_install_method }} completed successfully,
+          or set caddy_bin_path to the installed location.
+
+    - name: Check Caddy works
+      ansible.builtin.command: "{{ caddy_bin_path }} version"
+      changed_when: false

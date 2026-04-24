@@ -1,0 +1,50 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+  vars_files:
+    - "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+  tasks:
+    - name: Check Caddy binary exists
+      ansible.builtin.stat:
+        path: "{{ caddy_bin_path }}"
+      register: caddy_binary
+
+    - name: Assert Caddy binary is present and executable
+      ansible.builtin.assert:
+        that:
+          - caddy_binary.stat.exists
+          - caddy_binary.stat.executable
+        fail_msg: "Caddy binary is missing or not executable"
+
+    - name: Check Caddy responds to version command
+      ansible.builtin.command: "{{ caddy_bin_path }} version"
+      changed_when: false
+
+    - name: Check Cloudflare DNS module is available
+      ansible.builtin.command: "{{ caddy_bin_path }} list-modules"
+      register: caddy_modules
+      changed_when: false
+
+    - name: Assert Cloudflare DNS module is present
+      ansible.builtin.assert:
+        that:
+          - "'dns.providers.cloudflare' in caddy_modules.stdout"
+        fail_msg: "Cloudflare DNS module not found in Caddy build"
+
+    - name: Check Caddy service is active
+      ansible.builtin.command: "systemctl is-active {{ caddy_service_name }}"
+      changed_when: false
+
+    - name: Check HTTP response from Caddy
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/"
+        return_content: true
+      register: caddy_http
+
+    - name: Assert HTTP response is expected
+      ansible.builtin.assert:
+        that:
+          - caddy_http.status == 200
+          - "'Caddy is running' in caddy_http.content"
+        fail_msg: "Caddy did not return expected response"

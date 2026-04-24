@@ -1,0 +1,37 @@
+- name: Create symbolic link of stockfish for PGNDpoint
+  file:
+    src: "/usr/games/stockfish"
+    dest: "/usr/bin/stockfish"
+    state: link
+
+- name: Build SMAK REST endpoint
+  ansible.builtin.shell: |
+    mkdir -p build
+    cd build
+    cmake -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ..
+    cmake --build .
+  args:
+     chdir: "{{ app2_dir }}"
+  become: true
+  become_user: smak
+
+- name: Copy smakPGNDpoint service to host
+  become: true
+  become_user: root
+  ansible.builtin.copy:
+    src: ./templates/pgndpoint.service
+    dest: "/etc/systemd/system/pgndpoint.service"
+    mode: "0777"
+
+- name: Enable PGNDpoint service
+  become: true
+  become_user: root
+  ansible.builtin.systemd_service:
+    name: pgndpoint
+    enabled: yes
+    
+- name: Start service PGNDpoint
+  ansible.builtin.systemd_service:
+    name: pgndpoint
+    daemon_reload: true
+    state: restarted
