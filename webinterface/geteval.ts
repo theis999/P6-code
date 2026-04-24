@@ -161,16 +161,16 @@ async function getFen(id: number) {
 
         console.log("Had null:", hadNull);
         console.log(result);
-½
+
         var movesstrings: string[] = [];
-        result.forEach(ev => {
+        fens.forEach(ev => {
             if (ev) movesstrings.push(ev.move);
         });
 
 
         populateMoveArray(movesstrings);
 
-        populateMovesTable(result);
+        populateMovesTable(fens);
 
     }
     catch (error: any)
