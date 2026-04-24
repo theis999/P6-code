@@ -1,0 +1,39 @@
+- name: Install Caddy
+  ansible.builtin.apt:
+    name: "{{ caddy_pkg }}"
+    state: present
+    update_cache: true
+
+- name: Ensure Caddy config directory exists
+  ansible.builtin.file:
+    path: "{{ caddy_config_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_config_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Validate Caddyfile
+    - Reload Caddy
+
+- name: Ensure Caddy is enabled and running
+  ansible.builtin.service:
+    name: "{{ caddy_service }}"
+    state: started
+    enabled: true
+
+- name: Init SmallStep
+  include_tasks: init.yml
+
+- name: Install SmallStep
+  include_tasks: install.yml
+
+- name: Activate SmallStep service
+  include_tasks: smallstep-service.yml

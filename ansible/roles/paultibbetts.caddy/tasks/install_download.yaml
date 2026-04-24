@@ -1,0 +1,87 @@
+---
+- name: Install prerequisites for Caddy download (Debian)
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+    state: present
+    lock_timeout: 300
+  when: ansible_facts.os_family == "Debian"
+
+- name: Check if Caddy is installed
+  ansible.builtin.stat:
+    path: "{{ caddy_bin_path }}"
+  register: caddy_stat
+
+- name: Normalize Caddy plugins list
+  ansible.builtin.set_fact:
+    caddy_plugins_list: >-
+      {{
+        caddy_plugins
+        if (caddy_plugins is iterable and caddy_plugins is not mapping and caddy_plugins is not string)
+        else (caddy_plugins.keys() | list if caddy_plugins is mapping
+        else ([caddy_plugins] if caddy_plugins is string else []))
+      }}
+
+- name: Build Caddy plugins query string
+  ansible.builtin.set_fact:
+    caddy_plugins_query: "{{ caddy_plugins_list | map('regex_replace', '^(.*)$', 'p=\\1') | join('&') }}"
+
+- name: Build Caddy download URL
+  ansible.builtin.set_fact:
+    caddy_download_url_final: >-
+      {{
+        caddy_download_url
+        if caddy_download_url | length > 0
+        else caddy_download_base_url ~ '?os=' ~ caddy_download_os ~ '&arch=' ~ caddy_download_arch
+          ~ (('&' ~ caddy_plugins_query) if caddy_plugins_query | length > 0 else '')
+      }}
+
+- name: Download Caddy binary
+  ansible.builtin.get_url:
+    url: "{{ caddy_download_url_final }}"
+    dest: "{{ caddy_download_tmp_path }}"
+    mode: "0755"
+    force: "{{ caddy_download_force }}"
+    checksum: "{{ caddy_download_checksum | default(omit, true) }}"
+  register: caddy_download
+  no_log: true
+  when: caddy_download_force or not caddy_stat.stat.exists
+
+- name: Install Caddy binary
+  ansible.builtin.copy:
+    src: "{{ caddy_download_tmp_path }}"
+    dest: "{{ caddy_bin_path }}"
+    mode: "0755"
+    remote_src: true
+  notify: Restart caddy
+  when: caddy_download.changed or not caddy_stat.stat.exists or caddy_download_force
+
+- name: Clean up download artifacts
+  ansible.builtin.file:
+    path: "{{ caddy_download_tmp_path }}"
+    state: absent
+  when:
+    - caddy_cleanup_download
+    - caddy_download is defined
+    - caddy_download.changed
+
+- name: Add Caddy group
+  ansible.builtin.group:
+    name: "{{ caddy_group_name }}"
+
+- name: Add Caddy user
+  ansible.builtin.user:
+    name: "{{ caddy_user_name }}"
+    group: "{{ caddy_group_name }}"
+    home: "{{ caddy_user_home_directory }}"
+    create_home: true
+    shell: "/usr/sbin/nologin"
+    system: true
+
+- name: Create Caddy systemd unit file
+  ansible.builtin.template:
+    src: "{{ caddy_systemd_unit_template }}"
+    dest: "/etc/systemd/system/{{ caddy_service_name }}.service"
+    mode: "0644"
+  no_log: "{{ caddy_env_vars | length > 0 }}"
+  notify: Reload systemd

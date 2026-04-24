@@ -1,0 +1,9 @@
+---
+- name: Database
+  hosts: database
+  become: true
+  roles:
+    - ssh
+    - install
+    - update
+    - database

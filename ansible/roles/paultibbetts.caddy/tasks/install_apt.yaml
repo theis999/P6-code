@@ -1,0 +1,58 @@
+---
+- name: Install prerequisites for repository management
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - apt-transport-https
+    state: present
+    update_cache: true
+    lock_timeout: 300
+
+- name: Download Cloudsmith repo key (armored)
+  ansible.builtin.get_url:
+    url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+    dest: /usr/share/keyrings/caddy-stable-archive-keyring.asc
+    owner: root
+    group: root
+    mode: "0644"
+  register: caddy_repo_key
+
+- name: Check for dearmored keyring
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  register: caddy_repo_keyring
+
+- name: Dearmor key into dedicated apt keyring (overwrite)
+  ansible.builtin.command:
+    cmd: >-
+      gpg --dearmor --yes
+      --output /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+      /usr/share/keyrings/caddy-stable-archive-keyring.asc
+  when:
+    - caddy_repo_key.changed or not caddy_repo_keyring.stat.exists
+
+- name: Ensure keyring permissions
+  ansible.builtin.file:
+    path: /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    owner: root
+    group: root
+    mode: "0644"
+    state: file
+
+- name: Add Caddy stable repo (pinned to keyring)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/caddy-stable.list
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
+
+- name: Install Caddy
+  ansible.builtin.apt:
+    name: caddy
+    state: present
+    update_cache: true
+    lock_timeout: 300

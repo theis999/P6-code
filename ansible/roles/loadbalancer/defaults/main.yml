@@ -1,0 +1,10 @@
+caddy_pkg: caddy
+caddy_service: caddy
+
+caddy_config_path: /etc/caddy/Caddyfile
+caddy_user: caddy
+caddy_group: caddy
+
+caddy_email: ""
+caddy_sites: []
+caddy_enable_ufw: false

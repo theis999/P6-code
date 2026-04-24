@@ -1,0 +1,33 @@
+- name: Create a new database with name 'smak'
+  community.mysql.mysql_db:
+    name: '{{ smakdb_name }}'
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Create database user for SMAK db
+  community.mysql.mysql_user:
+    name: '{{ smak_username }}'
+    password: '{{ smak_password }}'
+    priv: 'smak.*:ALL'
+    host: '192.168.50.%' #mariadb ANY host 
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+
+- name: Bind on internal interface
+  become: true
+  become_user: root
+  ansible.builtin.lineinfile:
+    path: "/etc/mysql/mariadb.conf.d/50-server.cnf"
+    regexp: '^bind-address'
+    line: 'bind-address=192.168.50.18'
+    create: true
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Restart service mariadb
+  ansible.builtin.systemd_service:
+    name: mariadb
+    daemon_reload: true
+    state: restarted

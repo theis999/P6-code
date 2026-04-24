@@ -1,0 +1,8 @@
+---
+profile: basic
+exclude_paths:
+  - .venv
+  - .molecule
+  - molecule
+  - tests
+  - uv.lock

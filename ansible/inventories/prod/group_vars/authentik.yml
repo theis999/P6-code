@@ -1,0 +1,12 @@
+# Where to install
+authentik_dir: /opt/authentik
+
+# URL from official docs
+authentik_compose_url: "https://docs.goauthentik.io/compose.yml"
+
+# Optional port overrides (authentik defaults are 9000/9443)
+# authentik_compose_port_http: 80
+# authentik_compose_port_https: 443
+
+# Image pull behavior
+authentik_pull: true

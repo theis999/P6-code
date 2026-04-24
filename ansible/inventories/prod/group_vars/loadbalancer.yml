@@ -1,0 +1,42 @@
+caddy_email: "projectmaster@head9x.dk"
+
+caddy_sites:
+  - name: "smak.head9x.dk"
+    listen: "smak.head9x.dk"
+    reverse_proxy: "192.168.50.20:80 192.168.50.17:80"
+    proxy_headers:
+      - "Host webinterface.appserver.dk"
+      - "X-Forwarded-Host {host}"
+      - "X-Forwarded-Proto {scheme}"
+    extra_headers:
+      - "X-Content-Type-Options nosniff"
+      - "X-Frame-Options DENY"
+
+  - name: "smakanalysis.head9x.dk"
+    listen: "smakanalysis.head9x.dk"
+    reverse_proxy: "192.168.50.20:80 192.168.50.17:80"
+    proxy_headers:
+      - "Host smakanalysis.appserver.dk"
+      - "X-Forwarded-Host {host}"
+      - "X-Forwarded-Proto {scheme}"
+    extra_headers:
+      - "X-Content-Type-Options nosniff"
+      - "X-Frame-Options DENY"
+
+  - name: "smakauth.head9x.dk"
+    listen: "smakauth.head9x.dk"
+    reverse_proxy: "192.168.50.18:9000"
+    extra_headers:
+      - "X-Content-Type-Options nosniff"
+      - "X-Frame-Options DENY"
+
+
+step_ca_name: "SMAK-CA"
+step_dns_name: "smakca.head9x.dk"
+step_listen_address: ":8443"
+
+step_home: /etc/step-ca
+step_user: step
+step_group: step
+
+step_provisioner: projectmaster@head9x.dk

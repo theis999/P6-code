@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  role_name: caddy
+  namespace: paultibbetts
+  author: Paul Tibbetts
+  description: Installs and configures Caddy web server.
+  company: Homelab
+
+  license: MIT
+
+  min_ansible_version: "2.2"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+  galaxy_tags:
+    - caddy
+
+dependencies: []

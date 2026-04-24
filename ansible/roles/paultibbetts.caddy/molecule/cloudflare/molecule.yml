@@ -1,0 +1,40 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+platforms:
+  - name: caddy-ubuntu-2404-cloudflare
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    command: /lib/systemd/systemd
+    user: root
+    privileged: true
+    pre_build_image: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /tmp:rw,mode=1777
+
+provisioner:
+  name: ansible
+  inventory:
+    host_vars:
+      caddy-ubuntu-2404-cloudflare:
+        ansible_connection: community.docker.docker
+        ansible_user: root
+        ansible_python_interpreter: /usr/bin/python3
+        ansible_remote_tmp: /tmp/.ansible/tmp
+        caddy_install_method: download
+        caddy_plugins:
+          - github.com/caddy-dns/cloudflare
+        caddy_manage_systemd_env_file: true
+        caddy_systemd_env:
+          CF_API_TOKEN: vaulted_secret
+
+
+verifier:
+  name: ansible

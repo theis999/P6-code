@@ -1,0 +1,72 @@
+---
+- name: Stop and disable Caddy service (best effort)
+  ansible.builtin.service:
+    name: "{{ caddy_service_name }}"
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Remove systemd drop-in directory
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ caddy_service_name }}.service.d"
+    state: absent
+
+- name: Remove managed systemd env file
+  ansible.builtin.file:
+    path: "{{ caddy_systemd_env_file_path }}"
+    state: absent
+  when: caddy_manage_systemd_env_file
+
+- name: Remove systemd unit file (download install)
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ caddy_service_name }}.service"
+    state: absent
+  when: caddy_install_method == "download"
+
+- name: Remove Caddy binary (download install)
+  ansible.builtin.file:
+    path: "{{ caddy_bin_path }}"
+    state: absent
+  when: caddy_install_method == "download"
+
+- name: Remove Caddy package (apt install)
+  ansible.builtin.apt:
+    name: caddy
+    state: absent
+    lock_timeout: 300
+  when:
+    - caddy_install_method == "apt"
+    - ansible_facts.os_family == "Debian"
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Remove Caddy configuration directory (purge)
+  ansible.builtin.file:
+    path: "{{ caddy_config_path }}"
+    state: absent
+  when: caddy_purge
+
+- name: Remove Caddy log directory (purge)
+  ansible.builtin.file:
+    path: "{{ caddy_log_path }}"
+    state: absent
+  when: caddy_purge
+
+- name: Remove Caddy user (purge)
+  ansible.builtin.user:
+    name: "{{ caddy_user_name }}"
+    state: absent
+    remove: true
+  when:
+    - caddy_purge
+    - caddy_install_method == "download"
+
+- name: Remove Caddy group (purge)
+  ansible.builtin.group:
+    name: "{{ caddy_group_name }}"
+    state: absent
+  when:
+    - caddy_purge
+    - caddy_install_method == "download"

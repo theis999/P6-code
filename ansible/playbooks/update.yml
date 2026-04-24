@@ -1,0 +1,6 @@
+---
+- name: Update and upgrade packages
+  hosts: all
+  become: true
+  roles:
+    - update

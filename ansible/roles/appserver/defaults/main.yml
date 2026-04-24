@@ -1,0 +1,29 @@
+caddy_pkg: caddy
+caddy_service: caddy
+
+caddy_config_path: /etc/caddy/Caddyfile
+caddy_user: caddy
+caddy_group: caddy
+
+caddy_email: ""
+caddy_sites: []
+caddy_enable_ufw: false
+
+
+repo_url: "https://github.com/theis999/P6-code"
+repo_dest: "/opt/SMAK"          # where the repo will live
+app_subdir: "db-rest"                   # if mvnw is in a subdir, e.g. "server"; else ""
+app_dir: "{{ repo_dest }}/{{ app_subdir }}"
+# file you want to change INSIDE the repo
+file_to_modify: "{{ app_dir }}/src/main/resources/application.properties"
+# how to start your program after mvn package
+start_command: "java -jar target/chess-0.0.1-SNAPSHOT.jar"
+
+smak_username: "smak"
+smak_password: "smaksmak1234"
+
+app2_subdir: ChessRest
+app2_dir: "{{ repo_dest }}/{{ app2_subdir }}"
+
+app3_subdir: webinterface
+app3_dir: "{{ repo_dest }}/{{ app3_subdir }}"

@@ -1,0 +1,8 @@
+- name: Configure Caddy
+  hosts: appserver
+  become: true
+  roles:
+    - ssh
+    - install
+    - update
+    - appserver

@@ -1,0 +1,28 @@
+---
+- name: Validate install method
+  ansible.builtin.assert:
+    that:
+      - caddy_install_method in ["apt", "download"]
+    fail_msg: >-
+      Unsupported caddy_install_method={{ caddy_install_method }}.
+      Supported values are "apt" or "download".
+
+- name: Validate apt support on this OS
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family == "Debian"
+    fail_msg: >-
+      caddy_install_method=apt is only supported on Debian/Ubuntu
+      (ansible_facts.os_family={{ ansible_facts.os_family }}).
+      Use caddy_install_method=download instead.
+  when: caddy_install_method == "apt"
+
+- name: Install Caddy via apt
+  ansible.builtin.include_tasks: install_apt.yaml
+  when:
+    - caddy_install_method == "apt"
+    - ansible_facts.os_family == "Debian"
+
+- name: Install Caddy via download
+  ansible.builtin.include_tasks: install_download.yaml
+  when: caddy_install_method == "download"

@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Reload caddy
+  ansible.builtin.service:
+    name: "{{ caddy_service_name }}"
+    state: reloaded
+  when: caddy_caddyfile_template | default('') | length > 0
+
+- name: Restart caddy
+  ansible.builtin.service:
+    name: "{{ caddy_service_name }}"
+    state: restarted
+  when:
+    - caddy_install_method == "apt" or (caddy_caddyfile_template | default('') | length > 0)
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true

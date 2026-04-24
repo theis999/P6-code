@@ -1,0 +1,8 @@
+- name: Update APT cache after adding Docker repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Update all packages to their latest version
+  ansible.builtin.apt:
+    name: "*"
+    state: latest

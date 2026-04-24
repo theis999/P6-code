@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT-0
+---
+_caddy_download_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: armv7
+  armv6l: armv6

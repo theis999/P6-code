@@ -1,0 +1,56 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      - name: Install dependencies
+        run: uv sync
+      - name: Run ansible-lint
+        run: uv run ansible-lint .
+
+  molecule:
+    name: Molecule (${{ matrix.scenario }})
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scenario: default
+            runs_on: ubuntu-latest
+          - scenario: caddyfile
+            runs_on: ubuntu-latest
+          - scenario: cloudflare
+            runs_on: ubuntu-latest
+          - scenario: debian
+            runs_on: ubuntu-latest
+          - scenario: ubuntu22_arm
+            runs_on: ubuntu-22.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      - name: Install dependencies
+        run: uv sync
+      - name: Install collections
+        run: uv run ansible-galaxy collection install -r molecule/requirements.yml
+      - name: Run Molecule
+        run: uv run molecule test -s ${{ matrix.scenario }}

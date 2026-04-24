@@ -1,0 +1,11 @@
+caddy_email: "admin@example.com"
+
+caddy_sites:
+  - name: "webinterface.appserver.dk"
+    listen: "http://webinterface.appserver.dk"
+    root: "/var/www/html/webinterface"
+    file_server: true
+
+  - name: "smakanalysis.appserver.dk"
+    listen: "http://smakanalysis.appserver.dk"
+    reverse_proxy: "127.0.0.1:9090"
