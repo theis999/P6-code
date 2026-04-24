@@ -38,6 +38,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 ;
 var move_array = [];
 var evals = [];
+var fens = [];
+var selected_id = 1;
+var host = "http://localhost:9090";
+var evals_dict = {};
 function colorMoveTable(idx) {
     if (idx === 0) {
     }
@@ -52,14 +56,14 @@ function colorMoveTable(idx) {
             var cellcount = r.cells.length;
             for (var j = 1; j < cellcount; j++) {
                 if (r.cells) {
-                    r.cells.item(j).style.backgroundColor = "White";
+                    r.cells.item(j).classList.remove("cell-select");
                 }
             }
         }
     }
     var row = movestable.rows.item(Math.floor((idx + 1) / 2));
     if ((Math.floor(idx + 1) / 2) < 1) {
-        movestable.rows.item(2).cells.item(1).style.backgroundColor = "White";
+        movestable.rows.item(2).cells.item(1).classList.remove("cell-select");
         console.error("Illegal index");
         return;
     }
@@ -69,7 +73,7 @@ function colorMoveTable(idx) {
     var cellno = 1 + (idx + 1) % 2;
     console.log("cellno = " + cellno);
     var target_cell = row.cells.item(cellno);
-    target_cell.style.backgroundColor = "DarkSeaGreen";
+    target_cell.classList.add("cell-select");
 }
 function populateMoveArray(mvs) {
     move_array = [];
@@ -115,13 +119,107 @@ function populateMovesTable(moves) {
         }
     }
 }
-function getEval(id) {
+function getFen(id) {
     return __awaiter(this, void 0, void 0, function () {
         var url, response, result, movesstrings, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    url = "http://localhost:9090/games/eval/" + id;
+                    url = host + "/games/fen/" + id;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    if (id <= 0) {
+                        throw new Error("0 or negative ID's are not allowed.");
+                    }
+                    return [4 /*yield*/, fetch(url)];
+                case 2:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error('Response did unnice thing: ${response.status}');
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    result = _a.sent();
+                    console.log(result);
+                    fens = result;
+                    movesstrings = [];
+                    result.forEach(function (ev) {
+                        if (ev)
+                            movesstrings.push(ev.move);
+                    });
+                    populateMoveArray(movesstrings);
+                    populateMovesTable(result);
+                    return [3 /*break*/, 5];
+                case 4:
+                    error_1 = _a.sent();
+                    console.log(error_1);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+function updateEvals(request_id) {
+    return __awaiter(this, void 0, void 0, function () {
+        var url, _i, fens_1, f, item, response, r, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    url = host + "/fen/eval";
+                    console.debug("updateEvals");
+                    console.debug(fens);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 9, , 10]);
+                    _i = 0, fens_1 = fens;
+                    _a.label = 2;
+                case 2:
+                    if (!(_i < fens_1.length)) return [3 /*break*/, 8];
+                    f = fens_1[_i];
+                    if (f === null)
+                        return [3 /*break*/, 7];
+                    item = evals_dict[f.fen_string];
+                    if (!item) return [3 /*break*/, 3];
+                    console.debug("exists");
+                    return [3 /*break*/, 6];
+                case 3: return [4 /*yield*/, fetch(url, { method: 'POST', body: f.fen_string })];
+                case 4:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error('Response did unnice thing: ${response.status}');
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 5:
+                    r = _a.sent();
+                    r[0].ply = f.ply;
+                    evals_dict[f.fen_string] = item = r[0];
+                    console.log(r);
+                    _a.label = 6;
+                case 6:
+                    //if (request_id != selected_id) break;
+                    evals[f.ply - 1] = item;
+                    _a.label = 7;
+                case 7:
+                    _i++;
+                    return [3 /*break*/, 2];
+                case 8: return [3 /*break*/, 10];
+                case 9:
+                    error_2 = _a.sent();
+                    console.log(error_2);
+                    return [3 /*break*/, 10];
+                case 10: return [2 /*return*/];
+            }
+        });
+    });
+}
+function getEval(id) {
+    return __awaiter(this, void 0, void 0, function () {
+        var url, response, result, movesstrings, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    url = host + "/games/eval/" + id;
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
@@ -144,11 +242,10 @@ function getEval(id) {
                         movesstrings.push(ev.move);
                     });
                     populateMoveArray(movesstrings);
-                    populateMovesTable(result);
                     return [3 /*break*/, 5];
                 case 4:
-                    error_1 = _a.sent();
-                    console.error(error_1.message);
+                    error_3 = _a.sent();
+                    console.error(error_3.message);
                     return [3 /*break*/, 5];
                 case 5: return [2 /*return*/];
             }
@@ -175,6 +272,8 @@ function updateEvalTbl(plyno) {
         console.log(secondrow);
         var cls = secondrow.cells;
         var a = evals[plyno - 1];
+        console.log("eval");
+        console.log(a);
         if (!a) {
             return;
         }
