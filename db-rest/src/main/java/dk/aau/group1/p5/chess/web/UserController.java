@@ -24,20 +24,23 @@ public class UserController {
         service = userService;
     }
 
-       @GetMapping("/users")
+    @GetMapping("/users")
     public List<User> getAllUsers() {
         return service.getAll();
     }
 
     @PostMapping("/users")
     public User addUser(@RequestBody User new_user) {
-
+        new_user.setId(null);
+        
         return service.save(new_user);
     }
 
     @PatchMapping("/users/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updated_user) {
-        
+        if (updated_user.getId() == null) updated_user.setId(id);
+        else if (updated_user.getId() != id ) throw new RuntimeException("Id does not match on the updated user");
         return service.save(updated_user);
     }
 }
+
