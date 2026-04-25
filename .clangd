@@ -1,0 +1,12 @@
+CompileFlags:
+  Remove: ["-fno-printf-return-value", "-mfp16-format=ieee", "-fno-reorder-functions", "-mlongcalls", "-fstrict-volatile-bitfields", "-fno-freestanding"]
+  Add: ["-D__XTENSA__"]
+
+Style:
+  AngledHeaders: ["zephyr/.*"]
+
+# Completion:
+#   ArgumentLists: None
+
+Documentation:
+  CommentFormat: Doxygen

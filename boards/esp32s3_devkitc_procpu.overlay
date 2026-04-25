@@ -1,0 +1,16 @@
+&esp32_bt_hci {
+    status = "disabled";
+};
+
+&uart1 {
+    status = "okay";
+    pinctrl-0 = < &uart1_default >;
+    pinctrl-names = "default";
+    current-speed = < 0x1c200 >;
+};
+
+/ {
+    chosen {
+        smak,uart = &uart1;
+    };
+};

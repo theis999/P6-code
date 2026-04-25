@@ -6,3 +6,5 @@ webinterface/geteval.js
 newnewWebinterface/bin/*
 newnewWebinterface/obj/*
 .vscode/settings.json
+.cache/*
+.vscode/*
