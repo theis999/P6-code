@@ -12,6 +12,8 @@
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test.h>
 
+
+
 static const char p_EMPTY_SQUARE = ' ';
 static const char p_BLACK_PAWN = 'p', p_WHITE_PAWN = 'P';
 static const char p_BLACK_ROOK = 'r', p_WHITE_ROOK = 'R';
@@ -147,6 +149,9 @@ static uint8_t pin(const char *restrict str) {
 
     return (r | file);
 }
+
+static void pin_change(struct chess_state *st, const uint8_t pin_number, const bool is_up);
+
 
 void general_entry(void *obj);
 
@@ -652,6 +657,7 @@ enum smf_state_result white_castling_run(void *obj)
             st->state_val = white_move;
             st->x = WHITE_KING_STARTINGSQUARE;
             smf_set_state(ctx_ptr, STATE(white_move));
+            pin_change(st, st->pin_number, st->is_up);
         }   
     }
     else if (st->is_white_piece) {
@@ -898,6 +904,7 @@ enum smf_state_result black_castling_run(void *obj)
             st->state_val = black_move;
             st->x = BLACK_KING_STARTINGSQUARE;
             smf_set_state(ctx_ptr, STATE(black_move));
+            pin_change(st, st->pin_number, st->is_up);
         }
     }
     else if (st->is_black_piece) {
@@ -1944,6 +1951,72 @@ ZTEST(FSM_castling, white_queenside_castle_3__kkrr) {
     zassert_equal(state.board[pin("c1")], p_WHITE_KING);
     zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
     zassert_equal(count_pieces(&state), 2);
+}
+
+
+ZTEST(FSM_castling, cancel_into_move) {
+    clean_state(&state);
+    state.board[WHITE_ROOK_QUEENSIDE_STARTINGSQUARE] = p_WHITE_ROOK;
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    pin_change(&state, pin("e1"), true);
+    zassert_equal(state.state_val, white_castling);
+    pin_change(&state, pin("e2"), false);
+    zassert_equal(state.state_val, black);
+
+    clean_state(&state);
+    state.state_val = black;
+    state.board[BLACK_ROOK_QUEENSIDE_STARTINGSQUARE] = p_BLACK_ROOK;
+    state.board[BLACK_KING_STARTINGSQUARE] = p_BLACK_KING;
+    pin_change_test(&state, pin("e8"), true, black);
+    zassert_equal(state.state_val, black_castling);
+    pin_change(&state, pin("e7"), false);
+    zassert_equal(state.state_val, white);
+}
+
+ZTEST(FSM_castling, cancel_into_capture) {
+    clean_state(&state);
+    state.board[pin("e2")] = p_BLACK_KNIGHT;
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    pin_change(&state, pin("e1"), true);
+    zassert_equal(state.state_val, white_castling);
+    pin_change(&state, pin("e2"), true);
+    zassert_equal(state.state_val, white_capture);
+    pin_change(&state, pin("e2"), false);
+    zassert_equal(state.state_val, black);
+    zassert_equal(state.board[pin("e1")], p_EMPTY_SQUARE);
+    zassert_equal(state.board[pin("e2")], p_WHITE_KING);
+    zassert_equal(count_pieces(&state), 1);
+
+    clean_state(&state);
+    state.state_val = black;
+    state.board[pin("e7")] = p_WHITE_KNIGHT;
+    state.board[BLACK_KING_STARTINGSQUARE] = p_BLACK_KING;
+    pin_change_test(&state, pin("e8"), true, black);
+    zassert_equal(state.state_val, black_castling);
+    pin_change(&state, pin("e7"), true);
+    zassert_equal(state.state_val, black_capture);
+    pin_change(&state, pin("e7"), false);
+    zassert_equal(state.state_val, white);
+    zassert_equal(state.board[pin("e8")], p_EMPTY_SQUARE);
+    zassert_equal(state.board[pin("e7")], p_BLACK_KING);
+    zassert_equal(count_pieces(&state), 1);
+}
+
+ZTEST(FSM_castling, cancel_into_undo) {
+    clean_state(&state);
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    pin_change(&state, pin("e1"), true);
+    zassert_equal(state.state_val, white_castling);
+    pin_change(&state, pin("e1"), false);
+    zassert_equal(state.state_val, white);
+
+    clean_state(&state);
+    state.state_val = black;
+    state.board[BLACK_KING_STARTINGSQUARE] = p_BLACK_KING;
+    pin_change_test(&state, pin("e8"), true, black);
+    zassert_equal(state.state_val, black_castling);
+    pin_change(&state, pin("e8"), false);
+    zassert_equal(state.state_val, black);
 }
 
 #undef STATE
