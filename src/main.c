@@ -1735,6 +1735,75 @@ ZTEST(FSM_castling, black_kingside_castle_3__kkrr) {
     zassert_equal(count_pieces(&state), 2);
 }
 
+ZTEST(FSM_castling, black_queenside_castle_1__krkr) {
+    clean_state(&state);
+    state.state_val = black;
+    state.board[BLACK_ROOK_QUEENSIDE_STARTINGSQUARE] = p_BLACK_ROOK;
+    state.board[BLACK_KING_STARTINGSQUARE] = p_BLACK_KING;
+    zassert_true(state.black_queenside);
+    zassert_equal(count_pieces(&state), 2);
+    pin_change_test(&state, pin("e8"), true, black);
+    zassert_equal(state.state_val, black_castling);
+    pin_change(&state, pin("a8"), true);
+    zassert_equal(state.state_val, black_castling_queenside_KINGUP_ROOKUP);
+    pin_change(&state, pin("c8"), false);
+    zassert_equal(state.state_val, black_castling_queenside_kingdown_ROOKUP);
+    pin_change(&state, pin("d8"), false);
+    zassert_equal(state.state_val, white);
+    zassert_false(state.black_kingside);
+    zassert_false(state.black_queenside);
+    zassert_equal(state.board[pin("c8")], p_BLACK_KING);
+    zassert_equal(state.board[pin("d8")], p_BLACK_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+}
+
+ZTEST(FSM_castling, black_queenside_castle_2__krrk) {
+    clean_state(&state);
+    state.state_val = black;
+    state.board[BLACK_ROOK_QUEENSIDE_STARTINGSQUARE] = p_BLACK_ROOK;
+    state.board[BLACK_KING_STARTINGSQUARE] = p_BLACK_KING;
+    zassert_true(state.black_queenside);
+    zassert_equal(count_pieces(&state), 2);
+
+    pin_change_test(&state, pin("e8"), true, black);
+    zassert_equal(state.state_val, black_castling);
+    pin_change(&state, pin("a8"), true);
+    zassert_equal(state.state_val, black_castling_queenside_KINGUP_ROOKUP);
+    pin_change(&state, pin("d8"), false);
+    zassert_equal(state.state_val, black_castling_queenside_KINGUP_rookdown);
+    pin_change(&state, pin("c8"), false);
+
+    zassert_equal(state.state_val, white);
+    zassert_false(state.black_kingside);
+    zassert_false(state.black_queenside);
+    zassert_equal(state.board[pin("c8")], p_BLACK_KING);
+    zassert_equal(state.board[pin("d8")], p_BLACK_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+}
+
+ZTEST(FSM_castling, black_queenside_castle_3__kkrr) {
+    clean_state(&state);
+    state.state_val = black;
+    state.board[BLACK_ROOK_QUEENSIDE_STARTINGSQUARE] = p_BLACK_ROOK;
+    state.board[BLACK_KING_STARTINGSQUARE] = p_BLACK_KING;
+    zassert_true(state.black_queenside);
+    zassert_equal(count_pieces(&state), 2);    
+
+    pin_change_test(&state, pin("e8"), true, black);
+    zassert_equal(state.state_val, black_castling);
+    pin_change(&state, pin("c8"), false);
+    zassert_equal(state.state_val, black_castling_queenside_kingdown);
+    pin_change(&state, pin("a8"), true);
+    zassert_equal(state.state_val, black_castling_queenside_kingdown_ROOKUP);
+    pin_change(&state, pin("d8"), false);
+
+    zassert_equal(state.state_val, white);
+    zassert_false(state.black_kingside);
+    zassert_false(state.black_queenside);
+    zassert_equal(state.board[pin("c8")], p_BLACK_KING);
+    zassert_equal(state.board[pin("d8")], p_BLACK_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+}
 
 ZTEST(FSM_castling, white_kingside_castle_1__krkr) {
     clean_state(&state);
@@ -1801,6 +1870,79 @@ ZTEST(FSM_castling, white_kingside_castle_3__kkrr) {
     zassert_false(state.white_queenside);
     zassert_equal(state.board[pin("g1")], p_WHITE_KING);
     zassert_equal(state.board[pin("f1")], p_WHITE_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+}
+
+ZTEST(FSM_castling, white_queenside_castle_1__krkr) {
+    clean_state(&state);
+    state.board[WHITE_ROOK_QUEENSIDE_STARTINGSQUARE] = p_WHITE_ROOK;
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    zassert_true(state.white_queenside);
+    zassert_equal(count_pieces(&state), 2);
+    
+    pin_change(&state, pin("e1"), true);
+    zassert_equal(state.state_val, white_castling);
+    pin_change(&state, pin("a1"), true);
+    zassert_equal(state.state_val, white_castling_queenside_KINGUP_ROOKUP);
+    pin_change(&state, pin("c1"), false);
+    zassert_equal(state.state_val, white_castling_queenside_kingdown_ROOKUP);
+    pin_change(&state, pin("d1"), false);
+
+    zassert_equal(state.state_val, black);
+    zassert_false(state.en_passant);
+    zassert_false(state.white_kingside);
+    zassert_false(state.white_queenside);
+    zassert_equal(state.board[pin("c1")], p_WHITE_KING);
+    zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+
+}
+
+ZTEST(FSM_castling, white_queenside_castle_2__krrk) {
+    clean_state(&state);
+    state.board[WHITE_ROOK_QUEENSIDE_STARTINGSQUARE] = p_WHITE_ROOK;
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    zassert_true(state.white_queenside);
+    zassert_equal(count_pieces(&state), 2);
+    
+    pin_change(&state, pin("e1"), true);
+    zassert_equal(state.state_val, white_castling);
+    pin_change(&state, pin("a1"), true);
+    zassert_equal(state.state_val, white_castling_queenside_KINGUP_ROOKUP);
+    pin_change(&state, pin("d1"), false);
+    zassert_equal(state.state_val, white_castling_queenside_KINGUP_rookdown);
+    pin_change(&state, pin("c1"), false);
+
+    zassert_equal(state.state_val, black);
+    zassert_false(state.en_passant);
+    zassert_false(state.white_kingside);
+    zassert_false(state.white_queenside);
+    zassert_equal(state.board[pin("c1")], p_WHITE_KING);
+    zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+}
+
+ZTEST(FSM_castling, white_queenside_castle_3__kkrr) {
+    clean_state(&state);
+    state.board[WHITE_ROOK_QUEENSIDE_STARTINGSQUARE] = p_WHITE_ROOK;
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    zassert_true(state.white_queenside);
+    zassert_equal(count_pieces(&state), 2);
+    
+    pin_change(&state, pin("e1"), true);
+    zassert_equal(state.state_val, white_castling);
+    pin_change(&state, pin("c1"), false);
+    zassert_equal(state.state_val, white_castling_queenside_kingdown);
+    pin_change(&state, pin("a1"), true);
+    zassert_equal(state.state_val, white_castling_queenside_kingdown_ROOKUP);
+    pin_change(&state, pin("d1"), false);
+
+    zassert_equal(state.state_val, black);
+    zassert_false(state.en_passant);
+    zassert_false(state.white_kingside);
+    zassert_false(state.white_queenside);
+    zassert_equal(state.board[pin("c1")], p_WHITE_KING);
+    zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
     zassert_equal(count_pieces(&state), 2);
 }
 
