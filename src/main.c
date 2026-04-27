@@ -2,15 +2,23 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/cdefs.h>
+#include <zephyr/kernel.h>
+#include <zephyr/kernel/thread_stack.h>
 #include <zephyr/smf.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/sys/util_macro.h>
 
+#include <zephyr/toolchain.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test.h>
+#include <zephyr/cleanup.h>
+#include <zephyr/cleanup/kernel.h>
+#include <zephyr/sys/slist.h>
 
 
 
@@ -18,7 +26,7 @@ static const char p_EMPTY_SQUARE = ' ';
 static const char p_BLACK_PAWN = 'p', p_WHITE_PAWN = 'P';
 static const char p_BLACK_ROOK = 'r', p_WHITE_ROOK = 'R';
 static const char p_BLACK_KNIGHT = 'n', p_WHITE_KNIGHT = 'N';
-static const char p_BLACK_BISHOP = 'b', p_WHITE_BISHOP = 'B';
+[[maybe_unused]] static const char p_BLACK_BISHOP = 'b', p_WHITE_BISHOP = 'B';
 static const char p_BLACK_QUEEN = 'q', p_WHITE_QUEEN = 'Q';
 static const char p_BLACK_KING = 'k', p_WHITE_KING = 'K';
 
@@ -40,7 +48,7 @@ static const int WHITE_ROOK_QUEENSIDE_CASTLESQUARE = 63 - 4;
 static const int BLACK_ROOK_KINGSIDE_CASTLESQUARE = 0 + 5;
 static const int BLACK_ROOK_QUEENSIDE_CASTLESQUARE = 0 + 3;
 
-static char board[64] = 
+[[gnu::unused]] static char board[64] = 
 {
 	'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
 	'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
@@ -238,7 +246,7 @@ static void dump_state(const struct chess_state *st);
 void general_entry(void *obj) 
 {
     struct chess_state *st  = (struct chess_state *)obj;
-    struct smf_ctx *ctx_ptr = SMF_CTX(obj); 
+    __attribute__((unused)) struct smf_ctx *ctx_ptr = SMF_CTX(obj); 
     
     if (st->pin_number > ARRAY_SIZE(state.board)) {
         st->direct_to_error = true;
@@ -461,7 +469,7 @@ enum smf_state_result white_capture_run(void *obj)
     if (is_y_down || is_en_passant) {
         st->state_val = black;
         smf_set_state(ctx_ptr, STATE(black));
-        const char captured = st->board[st->y];
+        [[maybe_unused]]const char captured = st->board[st->y];
         st->board[st->pin_number] = st->board[st->x];
         st->board[st->x] = p_EMPTY_SQUARE;
         if (is_en_passant) {
@@ -472,7 +480,7 @@ enum smf_state_result white_capture_run(void *obj)
         st->en_passant = false;
 
         CHECK_WHITE_CASTLING(st, st->pin_number);
-        const bool promotion = HANDLE_WHITE_PROMOTION(st, st->pin_number);
+        [[maybe_unused]]const bool promotion = HANDLE_WHITE_PROMOTION(st, st->pin_number);
     } 
     else {
         st->state_val = error;
@@ -562,7 +570,7 @@ enum smf_state_result black_move_run(void *obj)
         CHECK_BLACK_EN_PASSANT(st, st->pin_number);
         HANDLE_BLACK_PONR(st, st->pin_number);
         CHECK_BLACK_CASTLING(st, st->pin_number);
-        const bool promotion = HANDLE_BLACK_PROMOTION(st, st->pin_number);
+        [[maybe_unused]] const bool promotion = HANDLE_BLACK_PROMOTION(st, st->pin_number);
 
         // SEND MOVE
     }
@@ -588,7 +596,7 @@ enum smf_state_result black_capture_run(void *obj)
     if (is_y_down || is_en_passant) {
         st->state_val = white;
         smf_set_state(ctx_ptr, STATE(white));
-        const char captured = st->board[st->y];
+        [[maybe_unused]]const char captured = st->board[st->y];
         st->board[st->pin_number] = st->board[st->x];
         st->board[st->x] = p_EMPTY_SQUARE;
         if (is_en_passant) {
@@ -599,7 +607,7 @@ enum smf_state_result black_capture_run(void *obj)
         st->en_passant = false;
 
         CHECK_BLACK_CASTLING(st, st->pin_number);
-        const bool promotion = HANDLE_BLACK_PROMOTION(st, st->pin_number);
+        [[maybe_unused]]const bool promotion = HANDLE_BLACK_PROMOTION(st, st->pin_number);
        // send move
     } 
     else {
@@ -2018,5 +2026,182 @@ ZTEST(FSM_castling, cancel_into_undo) {
     pin_change(&state, pin("e8"), false);
     zassert_equal(state.state_val, black);
 }
+
+K_THREAD_STACK_DEFINE(teststack, 2048);
+K_FIFO_DEFINE(fsm_fifo);
+
+
+struct __aligned(8) fsm_fifo_item_t {
+    void *fifo_reserved;
+    int pin;
+    bool is_up;
+    struct chess_state *st;
+};
+
+K_MUTEX_DEFINE(fsm_mutex);
+
+void do_work_with_fifo(struct k_work *work) 
+{
+    scope_guard(k_mutex)(&fsm_mutex); 
+    struct fsm_fifo_item_t *ffi = k_fifo_get(&fsm_fifo, K_FOREVER);
+    
+    pin_change(ffi->st, ffi->pin, ffi->is_up);
+    free(ffi);
+
+}
+
+K_SEM_DEFINE(sem_fifo_access, 0, 1);
+
+sys_slist_t move_check_list = SYS_SLIST_STATIC_INIT(&move_check_list);
+
+struct fsm_state_node {
+    sys_snode_t node;
+    enum states state;
+};
+
+void fifo_listener_entry(void) 
+{
+    while (1) {
+        k_sem_take(&sem_fifo_access, K_FOREVER);
+        struct fsm_fifo_item_t *ffi = k_fifo_get(&fsm_fifo, K_FOREVER);
+    
+        pin_change(ffi->st, ffi->pin, ffi->is_up);
+        struct fsm_state_node node = {
+            .state = ffi->st->state_val,
+        };
+        free(ffi);
+        
+        struct fsm_state_node *node_alloc = malloc(sizeof(struct fsm_state_node));
+        zassume_true(node_alloc);
+
+        memcpy(node_alloc, &node, sizeof(struct fsm_state_node));
+
+        sys_slist_append(&move_check_list, &node_alloc->node);
+        k_sem_give(&sem_fifo_access);
+    }
+}
+
+K_THREAD_DEFINE(fifo_listener, 1024, fifo_listener_entry, NULL, NULL, NULL, 7, 0, 0);
+
+void queue_fsm_work_fifo(struct chess_state *st, int pin, bool is_up)
+{
+    struct fsm_fifo_item_t item = {
+        .pin = pin,
+        .is_up = is_up,
+        .st = st
+    };
+
+    struct fsm_fifo_item_t *mem = malloc(sizeof(struct fsm_fifo_item_t));
+    zassume_not_null(mem);
+    
+    memcpy(mem, &item, sizeof(struct fsm_fifo_item_t));
+
+    scope_guard(k_mutex)(&fsm_mutex);
+    k_fifo_put(&fsm_fifo, mem);
+    k_sem_give(&sem_fifo_access);
+}
+
+
+
+ZTEST_SUITE(FSM_async, NULL, NULL, NULL, NULL, NULL);  
+
+static void cleanup_linked_fsm_nodes(sys_slist_t *list) {
+    if (list) {
+        struct fsm_state_node *ptr;
+        struct fsm_state_node *new_ptr;
+        
+        while (sys_slist_len(&move_check_list)) {
+            ptr = SYS_SLIST_PEEK_HEAD_CONTAINER(&move_check_list, ptr, node);
+            new_ptr = CONTAINER_OF(sys_slist_get(&move_check_list), struct fsm_state_node, node);
+            free(ptr);
+        }
+    }
+}
+
+SCOPE_DEFER_DEFINE(cleanup_linked_fsm_nodes, sys_slist_t *);
+
+ZTEST(FSM_async, wq_white_move) {
+
+    scope_defer(cleanup_linked_fsm_nodes)(&move_check_list);
+    reset_fsm(&state);
+
+    queue_fsm_work_fifo(&state, (63-8), true);
+    queue_fsm_work_fifo(&state, (63-16), false);
+    k_usleep(100);
+    zexpect_equal(state.state_val, black);
+
+    struct fsm_state_node *ptr;
+    
+    ptr = SYS_SLIST_PEEK_HEAD_CONTAINER(&move_check_list, ptr, node);
+    zexpect_equal(ptr->state, white_move);
+    ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
+    zexpect_equal(ptr->state, black);
+}
+
+ZTEST(FSM_async, wq_finish_white_capture) {
+
+    scope_defer(cleanup_linked_fsm_nodes)(&move_check_list);
+    reset_fsm(&state);
+    state.board[63-17] = 'p';
+
+    queue_fsm_work_fifo(&state, (63-8), true);
+    queue_fsm_work_fifo(&state, (63-17), true);
+    queue_fsm_work_fifo(&state, (63-17), false);
+    k_usleep(100);
+    zexpect_equal(state.state_val, black);
+
+    struct fsm_state_node *ptr;
+
+    ptr = SYS_SLIST_PEEK_HEAD_CONTAINER(&move_check_list, ptr, node);
+    zexpect_equal(ptr->state, white_move);
+    ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
+    zexpect_equal(ptr->state, white_capture);
+    ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
+    zexpect_equal(ptr->state, black);
+}
+
+ZTEST(FSM_async, white_queenside_castle_1__krkr_wq) {
+
+    scope_defer(cleanup_linked_fsm_nodes)(&move_check_list);
+
+    clean_state(&state);
+    state.board[WHITE_ROOK_QUEENSIDE_STARTINGSQUARE] = p_WHITE_ROOK;
+    state.board[WHITE_KING_STARTINGSQUARE] = p_WHITE_KING;
+    zassert_true(state.white_queenside);
+    zassert_equal(count_pieces(&state), 2);
+    
+    queue_fsm_work_fifo(&state, pin("e1"), true);
+    // zassert_equal(state.state_val, white_castling);
+    queue_fsm_work_fifo(&state, pin("a1"), true);
+    // zassert_equal(state.state_val, white_castling_queenside_KINGUP_ROOKUP);
+    queue_fsm_work_fifo(&state, pin("c1"), false);
+    // zassert_equal(state.state_val, white_castling_queenside_kingdown_ROOKUP);
+    queue_fsm_work_fifo(&state, pin("d1"), false);
+
+    k_usleep(100);
+
+    zassert_equal(state.state_val, black);
+    zassert_false(state.en_passant);
+    zassert_false(state.white_kingside);
+    zassert_false(state.white_queenside);
+    zassert_equal(state.board[pin("c1")], p_WHITE_KING);
+    zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
+    zassert_equal(count_pieces(&state), 2);
+
+    struct fsm_state_node *ptr;
+    
+    sys_snode_t *n_ptr = sys_slist_peek_head(&move_check_list);
+
+
+    ptr = SYS_SLIST_CONTAINER(n_ptr, ptr, node);
+    zexpect_equal(ptr->state, white_castling);
+    ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
+    zexpect_equal(ptr->state, white_castling_queenside_KINGUP_ROOKUP);
+    ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
+    zexpect_equal(ptr->state, white_castling_queenside_kingdown_ROOKUP);
+    ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
+    zexpect_equal(ptr->state, black);
+}
+
 
 #undef STATE
