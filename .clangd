@@ -5,6 +5,10 @@ CompileFlags:
 Style:
   AngledHeaders: ["zephyr/.*"]
 
+InlayHints:
+  Enabled: false
+  #Designators: false
+
 # Completion:
 #   ArgumentLists: None
 

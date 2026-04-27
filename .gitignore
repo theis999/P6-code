@@ -8,3 +8,4 @@ newnewWebinterface/obj/*
 .vscode/settings.json
 .cache/*
 .vscode/*
+cmp.c
