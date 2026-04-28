@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message BoardMove {
+    int32 pin = 1;
+    bool is_up = 2;
+}

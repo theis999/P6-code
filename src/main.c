@@ -1,3 +1,5 @@
+#include "pb.h"
+#include "pb_encode.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,7 +17,9 @@
 #include <zephyr/sys/util.h>
 #include <zephyr/sys/util_macro.h>
 
+#include <src/smak.pb.h>
 #include <zephyr/toolchain.h>
+#include <zephyr/ztest_assert.h>
 
 #ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
@@ -1039,28 +1043,6 @@ enum smf_state_result error_run(void *obj)
     return (enum smf_state_result)error;
 }
 
-// int main(void)
-// {
-//     for (size_t i = 0; i < ARRAY_SIZE(starting_board_initializer); i++) {
-//         state.board[i] = starting_board_initializer[i];
-//     }
-
-//     state.state_val = white;
-//     state.black_kingside = true;
-//     state.black_queenside = true;
-//     state.white_kingside = true;
-//     state.white_queenside = true;
-//     state.en_passant = false;
-//     state.ply_since_ponr = 0;
-//     state.ply = 0;
-//     state.x = 0;
-//     state.y = 0;
-
-//     while (1) {
-
-//     }
-// }
-
 void reset_fsm(struct chess_state *st)
 {
     /* probably get a mutex lock for this*/
@@ -1156,7 +1138,7 @@ static void pin_change_test(struct chess_state *st, const uint8_t pin_number, co
     }
 }
 
-static void dump_state(const struct chess_state *st)
+[[maybe_unused]] static void dump_state(const struct chess_state *st)
 {
     printk("Current state = %d\n", st->state_val);
     printk("BK = %s\n", st->black_kingside ? "true" : "false");
@@ -1483,7 +1465,6 @@ ZTEST(FSM_Promotion, black_capture_promotion)
     pin_change_test(&state, from, true, black);
     pin_change(&state, target, true);
     pin_change(&state, target, false);
-    dump_state(&state);
     zexpect_equal(state.state_val, white);
     zexpect_equal(state.board[from], p_EMPTY_SQUARE);
     zexpect_equal(state.board[target], p_BLACK_QUEEN);
@@ -1996,7 +1977,7 @@ ZTEST(FSM_castling, cancel_into_undo)
     zassert_equal(state.state_val, black);
 }
 
-#endif
+#endif // #ifdef CONFIG_ZTEST
 
 K_THREAD_STACK_DEFINE(teststack, 2048);
 K_FIFO_DEFINE(fsm_fifo);
@@ -2041,9 +2022,7 @@ void fifo_listener_entry(void)
         free(ffi);
 
         struct fsm_state_node *node_alloc = malloc(sizeof(struct fsm_state_node));
-#ifdef CONFIG_ZTEST
-        zassume_true(node_alloc);
-#endif
+
         memcpy(node_alloc, &node, sizeof(struct fsm_state_node));
 
         sys_slist_append(&move_check_list, &node_alloc->node);
@@ -2059,9 +2038,6 @@ void queue_fsm_work_fifo(struct chess_state *st, int pin, bool is_up)
 
     struct fsm_fifo_item_t *mem = malloc(sizeof(struct fsm_fifo_item_t));
 
-#ifdef CONFIG_ZTEST
-    zassume_not_null(mem);
-#endif
     memcpy(mem, &item, sizeof(struct fsm_fifo_item_t));
 
     scope_guard(k_mutex)(&fsm_mutex);
@@ -2174,6 +2150,35 @@ ZTEST(FSM_async, white_queenside_castle_1__krkr_wq)
     zexpect_equal(ptr->state, black);
 }
 
+ZTEST_SUITE(PB, NULL, NULL, NULL, NULL, NULL);
+
+// #include <pb_decode.h>
+// #include <pb_encode.h>
+// ZTEST(PB, encode_decode)
+// {
+//     uint8_t buf[BoardMove_size];
+//     BoardMove mv = BoardMove_init_zero;
+
+//     pb_ostream_t ostream = pb_ostream_from_buffer(buf, BoardMove_size);
+
+//     bool status = pb_encode(&ostream, BoardMove_fields, &mv);
+
+//     zassert_equal(status, true);
+
+//     pb_istream_t istream = pb_istream_from_buffer(buf, BoardMove_size);
+
+//     BoardMove mvdc = BoardMove_init_zero;
+
+//     status = pb_decode(&istream, BoardMove_fields, &mvdc);
+
+//     printk("%s\n", PB_GET_ERROR(&istream));
+
+//     zassert_equal(status, true);
+
+//     zassert_equal(mvdc.is_up, mv.is_up);
+//     zassert_equal(mvdc.pin, mv.pin);
+// }
+
 #endif
 
 #if !defined(CONFIG_ZTEST)
@@ -2201,5 +2206,39 @@ int main(void)
 }
 
 #endif
+
+#include <zephyr/drivers/uart.h>
+
+#define MSG_SIZE 32
+
+K_MSGQ_DEFINE(smak_ard_msgq, BoardMove_size, 16, 4);
+
+void do_uart_things(void)
+{
+
+    // const struct device *smak_uart = DEVICE_DT_GET(DT_CHOSEN(smak_uart));
+}
+
+static uint8_t buf[512] = { 0 };
+
+// void smak_uart_cb(const struct device *dev, void *user_data)
+// {
+//     uint8_t ch;
+
+//     BoardMove b = BoardMove_init_zero;
+
+//     if (!uart_irq_update(dev)) {
+//         return;
+//     }
+//     if (!uart_irq_rx_ready(dev)) {
+//         return;
+//     }
+
+//     for (size_t i = 0; (uart_fifo_read(dev, &buf[i], 1)) == 1; i++) { };
+
+//     pb_istream_t stream = pb_istream_from_buffer(buf, 512);
+
+//     bool success = pb_decode(&stream, BoardMove_fields, &b);
+// }
 
 #undef STATE

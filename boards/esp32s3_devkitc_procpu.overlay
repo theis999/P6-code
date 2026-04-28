@@ -7,10 +7,19 @@
     pinctrl-0 = < &uart1_default >;
     pinctrl-names = "default";
     current-speed = < 0x1c200 >;
+
+    smak_board: smak_uart {
+        compatible = "smak-board";
+        uart-speed = < 9600 >;
+        uart-api-type = "interrupt-driven";
+    };
 };
+
+
 
 / {
     chosen {
         smak,uart = &uart1;
     };
+
 };
