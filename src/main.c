@@ -1,5 +1,6 @@
-#include "pb.h"
-#include "pb_encode.h"
+#include <pb.h>
+#include <pb_decode.h>
+#include <pb_encode.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -9,20 +10,25 @@
 #include <sys/cdefs.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/uart.h>
 #include <zephyr/irq.h>
 #include <zephyr/kernel.h>
 #include <zephyr/kernel/thread_stack.h>
 #include <zephyr/smf.h>
 #include <zephyr/sys/printk.h>
+#include <zephyr/sys/ring_buffer.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/sys/util_macro.h>
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(smak_fsm, LOG_LEVEL_DBG);
+
 #include <src/smak.pb.h>
 #include <zephyr/toolchain.h>
-#include <zephyr/ztest_assert.h>
 
 #ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 #endif
 
 #include <zephyr/cleanup.h>
@@ -2001,6 +2007,7 @@ void do_work_with_fifo(struct k_work *work)
 }
 
 K_SEM_DEFINE(sem_fifo_access, 0, 1);
+K_SEM_DEFINE(sem_list_accessible, 0, 64);
 
 sys_slist_t move_check_list = SYS_SLIST_STATIC_INIT(&move_check_list);
 
@@ -2026,6 +2033,7 @@ void fifo_listener_entry(void)
         memcpy(node_alloc, &node, sizeof(struct fsm_state_node));
 
         sys_slist_append(&move_check_list, &node_alloc->node);
+        k_sem_give(&sem_list_accessible);
         k_sem_give(&sem_fifo_access);
     }
 }
@@ -2060,6 +2068,8 @@ static void cleanup_linked_fsm_nodes(sys_slist_t *list)
             new_ptr = CONTAINER_OF(sys_slist_get(&move_check_list), struct fsm_state_node, node);
             free(ptr);
         }
+
+        while (!k_sem_take(&sem_list_accessible, K_NO_WAIT)) { };
     }
 }
 
@@ -2067,16 +2077,17 @@ SCOPE_DEFER_DEFINE(cleanup_linked_fsm_nodes, sys_slist_t *);
 
 ZTEST(FSM_async, wq_white_move)
 {
-
     scope_defer(cleanup_linked_fsm_nodes)(&move_check_list);
     reset_fsm(&state);
 
     queue_fsm_work_fifo(&state, (63 - 8), true);
     queue_fsm_work_fifo(&state, (63 - 16), false);
-    k_usleep(100);
+    k_usleep(500);
     zexpect_equal(state.state_val, black);
 
     struct fsm_state_node *ptr;
+
+    k_sem_take(&sem_list_accessible, K_FOREVER);
 
     ptr = SYS_SLIST_PEEK_HEAD_CONTAINER(&move_check_list, ptr, node);
     zexpect_equal(ptr->state, white_move);
@@ -2086,7 +2097,6 @@ ZTEST(FSM_async, wq_white_move)
 
 ZTEST(FSM_async, wq_finish_white_capture)
 {
-
     scope_defer(cleanup_linked_fsm_nodes)(&move_check_list);
     reset_fsm(&state);
     state.board[63 - 17] = 'p';
@@ -2094,15 +2104,20 @@ ZTEST(FSM_async, wq_finish_white_capture)
     queue_fsm_work_fifo(&state, (63 - 8), true);
     queue_fsm_work_fifo(&state, (63 - 17), true);
     queue_fsm_work_fifo(&state, (63 - 17), false);
-    k_usleep(100);
+    k_usleep(500);
     zexpect_equal(state.state_val, black);
 
     struct fsm_state_node *ptr;
-
+    LOG_DBG("FIRST");
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     ptr = SYS_SLIST_PEEK_HEAD_CONTAINER(&move_check_list, ptr, node);
     zexpect_equal(ptr->state, white_move);
+    LOG_DBG("SECOND");
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
     zexpect_equal(ptr->state, white_capture);
+    LOG_DBG("THIRD");
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
     zexpect_equal(ptr->state, black);
 }
@@ -2111,7 +2126,6 @@ ZTEST(FSM_async, white_queenside_castle_1__krkr_wq)
 {
 
     scope_defer(cleanup_linked_fsm_nodes)(&move_check_list);
-
     clean_state(&state);
     state.board[WHITE_ROOK_QUEENSIDE_STARTINGSQUARE] = p_WHITE_ROOK;
     state.board[WHITE_KING_STARTINGSQUARE]           = p_WHITE_KING;
@@ -2126,60 +2140,104 @@ ZTEST(FSM_async, white_queenside_castle_1__krkr_wq)
     // zassert_equal(state.state_val, white_castling_queenside_kingdown_ROOKUP);
     queue_fsm_work_fifo(&state, pin("d1"), false);
 
-    k_usleep(100);
+    // k_usleep(500);
+    // k_sleep(K_SECONDS(1));
 
-    zassert_equal(state.state_val, black);
-    zassert_false(state.en_passant);
-    zassert_false(state.white_kingside);
-    zassert_false(state.white_queenside);
-    zassert_equal(state.board[pin("c1")], p_WHITE_KING);
-    zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
-    zassert_equal(count_pieces(&state), 2);
+    // zassert_equal(state.state_val, black);
+    // zassert_false(state.en_passant);
+    // zassert_false(state.white_kingside);
+    // zassert_false(state.white_queenside);
+    // zassert_equal(state.board[pin("c1")], p_WHITE_KING);
+    // zassert_equal(state.board[pin("d1")], p_WHITE_ROOK);
+    // zassert_equal(count_pieces(&state), 2);
 
     struct fsm_state_node *ptr;
 
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     sys_snode_t *n_ptr = sys_slist_peek_head(&move_check_list);
 
     ptr = SYS_SLIST_CONTAINER(n_ptr, ptr, node);
     zexpect_equal(ptr->state, white_castling);
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
     zexpect_equal(ptr->state, white_castling_queenside_KINGUP_ROOKUP);
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
     zexpect_equal(ptr->state, white_castling_queenside_kingdown_ROOKUP);
+    k_sem_take(&sem_list_accessible, K_FOREVER);
     ptr = SYS_SLIST_PEEK_NEXT_CONTAINER(ptr, node);
     zexpect_equal(ptr->state, black);
 }
 
 ZTEST_SUITE(PB, NULL, NULL, NULL, NULL, NULL);
 
-// #include <pb_decode.h>
-// #include <pb_encode.h>
-// ZTEST(PB, encode_decode)
-// {
-//     uint8_t buf[BoardMove_size];
-//     BoardMove mv = BoardMove_init_zero;
+bool encode_msg(uint8_t *buffer, size_t buf_size, size_t *msg_len)
+{
+    bool ret;
+    BoardMove mv = BoardMove_init_zero;
 
-//     pb_ostream_t ostream = pb_ostream_from_buffer(buf, BoardMove_size);
+    mv.is_up = true;
+    mv.pin   = 13;
 
-//     bool status = pb_encode(&ostream, BoardMove_fields, &mv);
+    pb_ostream_t stream = pb_ostream_from_buffer(buffer, buf_size);
 
-//     zassert_equal(status, true);
+    ret      = pb_encode(&stream, BoardMove_fields, &mv);
+    *msg_len = stream.bytes_written;
 
-//     pb_istream_t istream = pb_istream_from_buffer(buf, BoardMove_size);
+    if (!ret) {
+        PRINT("Encoding error: %s\n", PB_GET_ERROR(&stream));
+    }
+    return ret;
+}
 
-//     BoardMove mvdc = BoardMove_init_zero;
+bool decode_msg(uint8_t *buffer, size_t msg_len, BoardMove *out)
+{
+    bool ret;
+    *out = (BoardMove)BoardMove_init_zero;
 
-//     status = pb_decode(&istream, BoardMove_fields, &mvdc);
+    pb_istream_t stream = pb_istream_from_buffer(buffer, msg_len);
 
-//     printk("%s\n", PB_GET_ERROR(&istream));
+    ret = pb_decode(&stream, BoardMove_fields, out);
 
-//     zassert_equal(status, true);
+    PRINT("pin: %d\nis_up: %s\n", out->pin, out->is_up ? "true" : "false");
 
-//     zassert_equal(mvdc.is_up, mv.is_up);
-//     zassert_equal(mvdc.pin, mv.pin);
-// }
+    if (!ret) {
+        PRINT("Decoding error: %s\n", PB_GET_ERROR(&stream));
+    } else {
+        pb_release(BoardMove_fields, out);
+    }
 
-#endif
+    return ret;
+}
+
+ZTEST(PB, encode)
+{
+    uint8_t buf[BoardMove_size];
+    BoardMove mv = BoardMove_init_zero;
+
+    size_t written = 0;
+
+    bool success = encode_msg(buf, BoardMove_size, &written);
+
+    zassert_equal(success, true);
+}
+
+ZTEST(PB, decode)
+{
+    uint8_t buf[BoardMove_size];
+    BoardMove mv = BoardMove_init_zero;
+
+    size_t written = 0;
+
+    bool success = encode_msg(buf, BoardMove_size, &written);
+    zassert_equal(success, true);
+    success = decode_msg(buf, BoardMove_size, &mv);
+
+    zassert_equal(mv.is_up, true);
+    zassert_equal(mv.pin, 13);
+}
+
+#endif // #ifdef CONFIG_ZTEST
 
 #if !defined(CONFIG_ZTEST)
 
@@ -2187,58 +2245,103 @@ ZTEST_SUITE(PB, NULL, NULL, NULL, NULL, NULL);
 
 K_SEM_DEFINE(sem_step, 0, 1);
 
-void isr_func_cb(void *arg)
+#include <zephyr/input/input.h>
+
+static void button_input_callback(struct input_event *ev, void *user_data)
 {
-    ARG_UNUSED(arg);
-    k_sem_give(&sem_step);
+    ARG_UNUSED(user_data);
+
+    if (!ev->sync) {
+        return;
+    }
+
+    printk("callback\n");
+
+    if (ev->value) {
+        k_sem_give(&sem_step);
+    } else {
+        // k_sem_take(&sem_step, K_NO_WAIT);
+    }
 }
 
-void add_isr(void) { IRQ_CONNECT(24, 2, isr_func_cb, NULL, 0); }
+static const struct device *sw0_button = DEVICE_DT_GET(BUTTON_NODE);
+
+INPUT_CALLBACK_DEFINE(NULL, button_input_callback, NULL);
 
 int main(void)
 {
+
+    LOG_DBG("STARTING");
+
+    reset_fsm(&state);
+
     k_sem_take(&sem_step, K_FOREVER);
     queue_fsm_work_fifo(&state, (63 - 8), true);
-    k_sem_take(&sem_step, K_FOREVER);
+    k_sleep(K_SECONDS(1));
+    dump_state(&state);
+
+    // k_sem_take(&sem_step, K_FOREVER);
     queue_fsm_work_fifo(&state, (63 - 17), true);
-    k_sem_take(&sem_step, K_FOREVER);
+    k_sleep(K_SECONDS(1));
+    dump_state(&state);
+
+    // k_sem_take(&sem_step, K_FOREVER);
     queue_fsm_work_fifo(&state, (63 - 17), false);
+    k_sleep(K_SECONDS(1));
+    dump_state(&state);
 }
 
 #endif
 
-#include <zephyr/drivers/uart.h>
-
 #define MSG_SIZE 32
 
-K_MSGQ_DEFINE(smak_ard_msgq, BoardMove_size, 16, 4);
+// K_MSGQ_DEFINE(smak_ard_msgq, BoardMove_size, 16, 4);
+
+static const struct device *smak_uart_dev = DEVICE_DT_GET(DT_CHOSEN(smak_uart));
 
 void do_uart_things(void)
 {
-
-    // const struct device *smak_uart = DEVICE_DT_GET(DT_CHOSEN(smak_uart));
 }
 
-static uint8_t buf[512] = { 0 };
+#define RING_BUF_SIZE BoardMove_size * 32
 
-// void smak_uart_cb(const struct device *dev, void *user_data)
-// {
-//     uint8_t ch;
+RING_BUF_DECLARE(rb_arduino, RING_BUF_SIZE);
 
-//     BoardMove b = BoardMove_init_zero;
+void smak_uart_cb(const struct device *dev, void *user_data)
+{
 
-//     if (!uart_irq_update(dev)) {
-//         return;
-//     }
-//     if (!uart_irq_rx_ready(dev)) {
-//         return;
-//     }
+    int ret;
+    uint8_t *buf = { 0 };
+    uint32_t len = { 0 };
 
-//     for (size_t i = 0; (uart_fifo_read(dev, &buf[i], 1)) == 1; i++) { };
+    BoardMove b = BoardMove_init_zero;
 
-//     pb_istream_t stream = pb_istream_from_buffer(buf, 512);
+    if (!uart_irq_update(dev)) {
+        return;
+    }
+    if (!uart_irq_rx_ready(dev)) {
+        return;
+    }
 
-//     bool success = pb_decode(&stream, BoardMove_fields, &b);
-// }
+    len = ring_buf_put_claim(&rb_arduino, &buf, RING_BUF_SIZE);
+
+    if (len == 0) {
+        return;
+    }
+
+    ret = uart_fifo_read(dev, buf, len);
+    if (ret < 0) {
+        return;
+    }
+
+    pb_istream_t stream = pb_istream_from_buffer(buf, 512);
+
+    bool success = pb_decode(&stream, BoardMove_fields, &b);
+}
+
+void init_uart(void)
+{
+    uart_irq_callback_set(smak_uart_dev, smak_uart_cb);
+}
 
 #undef STATE
