@@ -146,19 +146,31 @@ async function getFen(id: number) {
             throw new Error('Response did unnice thing: ${response.status}');
         }
 
-        const result: Fen[] = await response.json();
+
+        const result: (Fen | null)[] = await response.json();
+
+        let hadNull = false;
+
+        fens = result.filter((x): x is Fen => {
+            if (x === null) {
+                hadNull = true;
+                return false;
+            }
+            return true;
+        });
+
+        console.log("Had null:", hadNull);
         console.log(result);
 
-        fens = result;
-
         var movesstrings: string[] = [];
-        result.forEach(ev => {
+        fens.forEach(ev => {
             if (ev) movesstrings.push(ev.move);
         });
 
+
         populateMoveArray(movesstrings);
 
-        populateMovesTable(result);
+        populateMovesTable(fens);
 
     }
     catch (error: any)
