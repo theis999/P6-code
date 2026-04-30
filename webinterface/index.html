@@ -191,6 +191,25 @@
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
         crossorigin="anonymous">
     </script>
+
+    <script type="text/javascript" src="./dist/jso.js"></script>
+<script>
+        let client = new jso.JSO({
+
+	client_id: "jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4",
+	redirect_uri: "http://localhost/webinterface/index.html", // The URL where you is redirected back, and where you perform run the callback() function.
+	authorization: "https://smakauth.head9x.dk/application/o/authorize/",
+    scopes: { request: ["https://smakauth.head9x.dk/application/o/userinfo/"]}
+});
+client.callback();
+client.getToken()
+    .then((token) => {
+    	console.log("I got the token: ", token)
+    });
+    </script>
+    <script type="text/javascript">
+
+    </script>
     <script src="geteval.js"></script>
     <script src="chessboardjs/js/chessboard-1.0.0.js"></script>
     <script>
