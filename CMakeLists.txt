@@ -15,4 +15,6 @@ zephyr_nanopb_sources(app src/smak.proto)
 
 target_sources(app PRIVATE 
     src/main.c 
+    src/model.c
+    src/fsm.c
 )

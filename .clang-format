@@ -17,3 +17,18 @@ AlignConsecutiveDeclarations:
 AlignEscapedNewlines: LeftWithLastLine
 AlignArrayOfStructures: Left
 ---
+# Language: C++
+# TabWidth: 4
+# PointerAlignment: Right
+# AlignAfterOpenBracket: true
+# AlignConsecutiveAssignments:
+#     Enabled: true
+#     AcrossEmptyLines: false
+#     AcrossComments: false
+# AlignConsecutiveDeclarations:
+#     Enabled: false
+#     AcrossEmptyLines: false
+#     AcrossComments: false
+# AlignEscapedNewlines: LeftWithLastLine
+# AlignArrayOfStructures: Left
+# ---
