@@ -9,3 +9,10 @@ caddy_sites:
   - name: "smakanalysis.appserver.dk"
     listen: "http://smakanalysis.appserver.dk"
     reverse_proxy: "127.0.0.1:9090"
+
+  - name: "smakdb.appserver.dk"
+    listen: "http://smakdb.appserver.dk"
+    reverse_proxy: "127.0.0.1:8080"
+    proxy_headers:
+      - "Host smakanalysis.appserver.dk"
+      - "X-Forwarded-Host {host}"

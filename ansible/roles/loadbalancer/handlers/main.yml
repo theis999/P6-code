@@ -5,4 +5,4 @@
 - name: Reload Caddy
   ansible.builtin.service:
     name: "{{ caddy_service }}"
-    state: reloaded
+    state: restarted

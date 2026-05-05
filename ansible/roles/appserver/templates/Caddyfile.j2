@@ -12,7 +12,11 @@
 {% for site in caddy_sites %}
 {{ site.listen }} {
 {% if site.reverse_proxy is defined %}
-  reverse_proxy {{ site.reverse_proxy }}
+  reverse_proxy {{ site.reverse_proxy }}{% if site.proxy_headers is defined and site.proxy_headers|length > 0 %} {
+{% for h in site.proxy_headers %}
+    header_up {{ h }}
+{% endfor %}
+  }{% endif %}
 {% endif %}
 
 {% if site.root is defined %}
