@@ -21,7 +21,7 @@
   ansible.builtin.copy:
     src: ./templates/pgndpoint.service
     dest: "/etc/systemd/system/pgndpoint.service"
-    mode: "0777"
+    mode: "0644"
 
 - name: Enable PGNDpoint service
   become: true

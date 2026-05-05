@@ -3,3 +3,5 @@ build/
 ansible/.password
 ansible/.vscode/settings.json
 webinterface/geteval.js
+newnewWebinterface/bin/*
+newnewWebinterface/obj/*

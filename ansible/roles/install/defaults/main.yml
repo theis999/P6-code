@@ -22,7 +22,12 @@ appserver_packages:
   - ninja-build
   - acl # Access Control Lists - for use with unpriv-unpriv ansible
   - stockfish
+  - dotnet-sdk-10.0
+  - aspnetcore-runtime-10.0
+  - dotnet-runtime-10.0
 
 docker_repo_uri: "https://download.docker.com/linux/debian"
 docker_keyring_path: "/etc/apt/keyrings/docker.asc"
 docker_sources_path: "/etc/apt/sources.list.d/docker.sources"
+
+# TODO - LAV PÆN MS INTEGRATION!

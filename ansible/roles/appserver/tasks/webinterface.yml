@@ -1,28 +1,32 @@
-- name: Ensure buildSH is executable
-  ansible.builtin.file:
-    path: "{{ app3_dir }}/build.sh"
-    mode: "0755"
-
-- name: Replace http://localhost:9090 with correct hostname
+- name: Replace clientID
   ansible.builtin.replace:
-    path: /opt/SMAK/webinterface/geteval.ts
-    regexp: 'http://localhost:9090'
-    replace: 'https://smakanalysis.head9x.dk'
+    path: /opt/SMAK/newnewWebinterface/appsettings.json
+    regexp: '"ClientId": "",'
+    replace: '{{ ClientId }}'
 
-- name: Run buildSH
-  ansible.builtin.command: ./build.sh
-  args:
-    chdir: "{{ app3_dir }}"
-  register: build_result
-  failed_when: >
-    build_result.rc != 0 and
-    "'tsc' not in build_result.stderr"
+- name: Replace clientSecret
+  ansible.builtin.replace:
+    path: /opt/SMAK/newnewWebinterface/appsettings.json
+    regexp: '"ClientSecret": ""'
+    replace: '{{ ClientSecret }}'
 
-- name: Copy smak webinterface to varwwwhtml
+- name: Copy webinterface service to host
   become: true
   become_user: root
   ansible.builtin.copy:
-    src: "{{ app3_dir }}"
-    dest: "/var/www/html/"
-    mode: "0777"
-    remote_src: true
+    src: ./templates/webinterface.service
+    dest: "/etc/systemd/system/webinterface.service"
+    mode: "0644"
+
+- name: Enable webinterface service
+  become: true
+  become_user: root
+  ansible.builtin.systemd_service:
+    name: webinterface
+    enabled: yes
+    
+- name: Start service webinterface
+  ansible.builtin.systemd_service:
+    name: webinterface
+    daemon_reload: true
+    state: restarted

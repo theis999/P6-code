@@ -1,0 +1,366 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Game Analysis";
+}
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+<link rel="stylesheet" href="js/chessboardjs/css/chessboard-1.0.0.min.css">
+    <div>
+        <div>
+            <div style="float: left; width: 45%; position: relative; left: 20%;">
+                <div id="myBoard" style="width: 100%;"></div>
+                <div id="btns" style="width: 100.1%; padding-top:1em;">
+                    <button id="prevbtn" class="button btn-left">Previous move</button>
+                    <button id="nextbtn" class="button btn-left">Next move</button>
+                    <button id="resetbtn" class="button btn-right">Reset position</button>
+                </div>
+                <table id="evaltable" style="width: 100%; margin-top: 1em; position: relative; table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th scope="col">Ply</th>
+                            <th scope="col">Evaluation</th>
+                            <th scope="col">Best move</th>
+                            <th scope="col">Best response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="plycol">0</td>
+                            <td id="evcol"></td>
+                            <td id="bmcol"></td>
+                            <td id="pdcol"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="float: right; position: relative; right: 10%; height: 30%; margin-left: 1em; padding-left: 1em;">
+                <div class="movescontainer">
+                    <table class="mtable" id="movestable" style="position: relative; width: 12em; table-layout: fixed;">
+                        <thead style="width: 5em;">
+                            <th scope="col" style="max-width: 1em;"><button onclick="softReset()" class="reset">#</button></th>
+                            <th scope="col" style="background-color: white; max-width: min-content;"><button onclick="softReset()" class="reset"></button></th>
+                            <th scope="col" style="background-color: black; max-width: min-content;"><button onclick="softReset()" class="reset"></button></th>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+
+                <form id="gameform" style="width:auto; ">
+                    <div>
+                        <input id="gameidinput" type="number" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
+                    </div>
+                    <div style="position: relative; left: 0em">
+                        <input type="submit" width="100%" style="text-align: center; width: 100%;" class="button" value="Select ID">
+                    </div>                    
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>th, td {border: 1px solid black; padding: 8px 10px;}; </style>
+    <style>
+        table {
+            border-collapse: collapse; 
+            border: 2px solid black;
+
+            td:hover {background-color: rgba(255, 127, 80, 0.518);};
+            .cell-select {background-color: #4b6b1c;}
+            td.cell-select:hover {background-color: #5e972d;}
+            tr:nth-child(even) {background-color: #e2e2e2;}
+
+        }
+    </style>
+    <style>
+        input[type=number] {
+        /*for absolutely positioning spinners*/
+        position: relative; 
+        padding: 5px;
+        padding-right: 25px;
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+
+        input[type=number]::-webkit-outer-spin-button, 
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: inner-spin-button !important;
+            width: 25px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+        }
+        .button {
+            background-color: #763b5e;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            
+        }
+        .button:hover{ 
+            background-color: #924738;
+        }
+        .btn-left{ 
+            width: 25%;
+            margin-right: 0px;
+        }
+        .btn-right{
+            width: 25%;
+            margin-right: 0px;
+            float: right;
+        }
+
+    </style>
+    <style>
+        .movescontainer {
+            border: 1px solid black padding 8px 10px;
+            border-bottom: none;
+            overflow: auto;
+            height: 30%;
+        }
+        .mtable {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+        }
+        .mtable td:empty {
+            border-left: 0;
+            border-right: 0;
+        }
+        .mtable th:nth-child(1) {
+            position: sticky;
+            left: 0;
+        }
+        
+        .mtable td:first-child {
+            text-align: center;
+        }
+
+        .mtable th {
+            height: 2.5em;
+            padding: 0;
+            text-align: center;
+        }
+        .mtable td {
+            height: 2.5em;
+            padding: 0;
+        }
+
+        .no-data {
+            text-align: center;
+        }
+        .reset,
+        .clickable {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            text-align: center;
+            display: block;
+            width: 100%;
+            height: 100%;
+            outline: 0; 
+            background-color: transparent; 
+            border: none;
+        }
+        
+    </style>
+    <style type="text/css">
+        .highlight-white {
+            box-shadow: inset 0 0 3px 3px yellow;
+        }
+        .highlight-black {
+            box-shadow: inset 0 0 3px 3px blue;
+        }
+        .highlight-best {
+            box-shadow: inset 0 0 3px 3px blue;
+        }
+        .highlight-worst {
+            box-shadow: inset 0 0 3px 3px rgb(255, 0, 0);
+        }
+
+    </style>
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous">
+    </script>
+    <script src="js/geteval.js"></script>
+    <script src="js/chessboardjs/js/chessboard-1.0.0.js"></script>
+    <script>
+        var ply_counter = document.getElementById("plycol");
+        var board = Chessboard('myBoard', 'start');
+        var index = 0;
+        var positions = [];
+        $('#nextbtn').on('click', function() {
+            if (move_array.length === 0) {
+                return;
+            }
+            if (index >= move_array.length) {
+                return;
+            }
+            if(!(positions.length > index)) {
+                positions.push(board.fen())
+            }
+            
+            board.move(move_array[index]);
+            index++;
+            ply_counter.innerHTML = (index).toString();
+            clearEvalTbl();
+            updateEvalTbl(index);
+            colorMoveTable(index);
+
+            let $board = $('#myBoard');
+            $board.find('.highlight-white').removeClass('highlight-white');
+            $board.find('.square-' + move_array[index-1].split("-")[0]).addClass('highlight-white');
+            $board.find('.square-' + move_array[index-1].split("-")[1]).addClass('highlight-white');
+        })
+
+        $('#prevbtn').on('click', function() {            
+            if (move_array.length === 0) {
+                return;
+            }
+            if (index <= 1) {
+                clearEvalTbl();
+                ply_counter.innerHTML = "0";
+                board.start();
+                if (index <= 0) {
+                    return;
+                }
+            }
+            index--
+            if (index > 0) {
+                colorMoveTable(index);
+            } else {
+                movestable.rows.item(1).cells.item(1).style.backgroundColor = "White";
+            }
+            ply_counter.innerHTML = index.toString();
+
+            board.position(positions[index]);
+            clearEvalTbl();
+            updateEvalTbl(index);
+
+            let $board = $('#myBoard');
+            $board.find('.highlight-white').removeClass('highlight-white');
+            $board.find('.square-' + move_array[index].split("-")[0]).addClass('highlight-white');
+            $board.find('.square-' + move_array[index].split("-")[1]).addClass('highlight-white');
+        })
+
+        $('#resetbtn').on('click', function() {
+            positions = [];
+            evals = [];
+            move_array = [];
+            index = 0;
+            ply_counter.innerHTML = "0";
+            board.start();
+            deleteMoves();
+            clearEvalTbl();
+
+            let $board = $('#myBoard');
+            $board.find('.highlight-white').removeClass('highlight-white');
+        });
+var item;
+        $('form').on('submit', async function(event) {
+            item = this;
+            item[1].disabled = true;
+
+            event.preventDefault();
+            positions = [];
+            evals = [];
+            index = 0;
+            ply_counter.innerHTML = "0";
+            board.start();
+            deleteMoves();
+            clearEvalTbl();
+            var formid = $("#gameidinput").first().val();
+            const id = Number.parseInt(formid);
+            let $board = $('#myBoard');
+            $board.find('.highlight-white').removeClass('highlight-white');            
+            //getEval(id)
+            selected_id = id;
+            await getFen(id);
+            item[1].disabled = false;
+            await updateEvals(id);
+
+        });
+
+        $('#tblbtn').on('click', function(event) {
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            console.log("We get here?");
+            
+            let m_id = (this).data("cellid");
+            if (index < m_id) {
+                for (let i = index; i < m_id; i++) {
+                    $('#nextbtn').click();
+                }
+            } 
+            if (index > m_id) {
+                for (let i = m_id; i > m_id; i--) {
+                    $('#prevbtn').click();
+                }
+            }
+        });
+
+        function jumpToMove(moveno) {
+            console.log("jumping to move " + moveno);
+            
+            let m_id = moveno + 1;
+            if (index < m_id) {
+                for (let i = index; i < m_id; i++) {
+                    $('#nextbtn').click();
+                }
+            } 
+            if (index > m_id) {
+                console.log("Reverse path");
+                
+                for (let i = index; i > m_id; i--) {
+                    $('#prevbtn').click();
+                }
+            }
+        }
+
+        function softReset() {
+            jumpToMove(-1);
+        }
+
+        $(function() {
+            $('#bmcol').hover(function() {
+                let from = evals[index-1].bestmove.substring(0,2);
+                let to =  evals[index-1].bestmove.substring(2,4);
+                console.log(from, to);
+                $('.square-'+from).addClass('highlight-best');
+                $('.square-'+to).addClass('highlight-best');
+                //$('#bmcol').css('background-color', 'yellow');
+            }, function() {
+                // on mouseout, reset the background colour
+                $('.highlight-best').removeClass('highlight-best');
+            });
+
+            $('#pdcol').hover(function() {
+                let from = evals[index-1].bestmove.substring(0,2);
+                let to =  evals[index-1].bestmove.substring(2,4);
+                console.log(from, to);
+                $('.square-'+from).addClass('highlight-best');
+                $('.square-'+to).addClass('highlight-best');
+
+                from = evals[index-1].ponder.substring(0,2);
+                to =  evals[index-1].ponder.substring(2,4);
+                $('.square-'+from).addClass('highlight-worst');
+                $('.square-'+to).addClass('highlight-worst');
+                //$('#bmcol').css('background-color', 'yellow');
+            }, function() {
+                // on mouseout, reset the background colour
+                $('.highlight-best').removeClass('highlight-best');
+                $('.highlight-worst').removeClass('highlight-worst');
+            });
+        }); 
+    </script>
