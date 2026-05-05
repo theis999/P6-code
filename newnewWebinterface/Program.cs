@@ -100,7 +100,7 @@ var requireAuthPolicy = new AuthorizationPolicyBuilder()
 
 builder.WebHost.UseStaticWebAssets();
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
+/*builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     // Enable X-Forwarded-For and X-Forwarded-Proto
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -114,7 +114,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Add(IPAddress.Parse("192.168.50.20"));
     options.KnownProxies.Add(IPAddress.Parse("0.0.0.0"));
     options.KnownProxies.Add(IPAddress.Parse("127.0.0.1"));
-});
+});*/
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -133,6 +133,8 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+app.UseForwardedHeaders();
 
 app.UseHttpsRedirection();
 
