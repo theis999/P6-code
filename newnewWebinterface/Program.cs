@@ -116,6 +116,11 @@ builder.WebHost.UseStaticWebAssets();
     options.KnownProxies.Add(IPAddress.Parse("127.0.0.1"));
 });*/
 
+var forwardingOptions = new ForwardedHeadersOptions()
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 
@@ -134,7 +139,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseForwardedHeaders();
+app.UseForwardedHeaders(forwardingOptions);
 
 app.UseHttpsRedirection();
 
