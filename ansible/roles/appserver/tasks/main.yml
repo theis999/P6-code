@@ -8,6 +8,12 @@
       - github.com/greenpau/caddy-security
     caddy_manage_systemd_env_file: true
 
+- name: Restart service caddy
+  ansible.builtin.systemd_service:
+    name: caddy
+    daemon_reload: true
+    state: restarted
+
 #- name: Database endpoint deployment
 #  include_tasks: dbendpoint.yml
 

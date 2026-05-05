@@ -5,7 +5,7 @@ caddy_sites:
     listen: "smak.head9x.dk"
     reverse_proxy: "192.168.50.20:80 192.168.50.17:80"
     proxy_headers:
-      - "Host webinterface.appserver.dk"
+      - "Host smak.head9x.dk"
       - "X-Forwarded-Host {host}"
       - "X-Forwarded-Proto {scheme}"
     extra_headers:
@@ -16,7 +16,7 @@ caddy_sites:
     listen: "smakanalysis.head9x.dk"
     reverse_proxy: "192.168.50.20:80 192.168.50.17:80"
     proxy_headers:
-      - "Host smakanalysis.appserver.dk"
+      - "Host smakanalysis.head9x.dk"
       - "X-Forwarded-Host {host}"
       - "X-Forwarded-Proto {scheme}"
     extra_headers:
@@ -27,7 +27,7 @@ caddy_sites:
     listen: "smakdb.head9x.dk"
     reverse_proxy: "192.168.50.20:80 192.168.50.17:80"
     proxy_headers:
-      - "Host smakdb.appserver.dk"
+      - "Host smakdb.head9x.dk"
       - "X-Forwarded-Host {host}"
       - "X-Forwarded-Proto {scheme}"
     extra_headers:

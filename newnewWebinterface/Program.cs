@@ -97,6 +97,22 @@ var requireAuthPolicy = new AuthorizationPolicyBuilder()
 
 builder.WebHost.UseStaticWebAssets();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    // Enable X-Forwarded-For and X-Forwarded-Proto
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    // Remove default loopback restriction if using a specific proxy IP
+    // options.KnownNetworks.Clear();
+    // options.KnownProxies.Clear();
+
+    // Add the specific IP of your reverse proxy (e.g., Nginx, IIS ARR)
+    options.KnownProxies.Add(IPAddress.Parse("192.168.50.17"));
+    options.KnownProxies.Add(IPAddress.Parse("192.168.50.20"));
+    options.KnownProxies.Add(IPAddress.Parse("0.0.0.0"));
+    options.KnownProxies.Add(IPAddress.Parse("127.0.0.1"));
+});
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 

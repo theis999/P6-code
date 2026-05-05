@@ -1,22 +1,28 @@
 caddy_email: "admin@example.com"
 
 caddy_sites:
-  #- name: "webinterface.appserver.dk"
-  #  listen: "http://webinterface.appserver.dk"
+  #- name: "webinterface.head9x.dk"
+  #  listen: "http://webinterface.head9x.dk"
   #  root: "/var/www/html/webinterface"
   #  file_server: true
 
-  - name: "webinterface.appserver.dk"
-    listen: "http://webinterface.appserver.dk"
-    reverse_proxy: "127.0.0.1:5200"
+  - name: "smak.head9x.dk"
+    listen: "http://smak.head9x.dk"
+    reverse_proxy: "https://127.0.0.1:7200"
+    proxy_headers:
+      - "X-Forwarded-Host {host}"
+      - "X-Forwarded-Proto {scheme}"
+    extra_headers:
+      - "X-Content-Type-Options nosniff"
+      - "X-Frame-Options DENY"
 
-  - name: "smakanalysis.appserver.dk"
-    listen: "http://smakanalysis.appserver.dk"
+  - name: "smakanalysis.head9x.dk"
+    listen: "http://smakanalysis.head9x.dk"
     reverse_proxy: "127.0.0.1:9090"
 
-  - name: "smakdb.appserver.dk"
-    listen: "http://smakdb.appserver.dk"
+  - name: "smakdb.head9x.dk"
+    listen: "http://smakdb.head9x.dk"
     reverse_proxy: "127.0.0.1:8080"
     proxy_headers:
-      - "Host smakanalysis.appserver.dk"
+      - "Host smakanalysis.head9x.dk"
       - "X-Forwarded-Host {host}"
