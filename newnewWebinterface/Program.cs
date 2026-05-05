@@ -112,7 +112,10 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+	ForwardedHeaders = ForwardedHeaders.XForwardedProto
+});
 
 //IdentityModelEventSource.ShowPII = true;
 JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();

@@ -4,6 +4,7 @@ caddy_sites:
   - name: "smak.head9x.dk"
     listen: "smak.head9x.dk"
     reverse_proxy: "192.168.50.20:80 192.168.50.17:80"
+    lb_policy: "cookie"
     proxy_headers:
       - "Host smak.head9x.dk"
       - "X-Forwarded-Host {host}"

@@ -1,0 +1,12 @@
+[Unit]
+Description=SMAKwebinterface
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "cd /opt/SMAK/newnewWebinterface/ && dotnet build && dotnet run"
+WorkingDirectory=/opt/SMAK/newnewWebinterface/
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -16,6 +16,9 @@
 {% for h in site.proxy_headers %}
     header_up {{ h }}
 {% endfor %}
+{% if site.lb_policy is defined %}
+    lb_policy {{ site.lb_policy }}
+{% endif %}
   }{% endif %}
 {% endif %}
 

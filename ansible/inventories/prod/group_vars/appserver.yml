@@ -8,10 +8,10 @@ caddy_sites:
 
   - name: "smak.head9x.dk"
     listen: "http://smak.head9x.dk"
-    reverse_proxy: "https://127.0.0.1:7200"
+    reverse_proxy: "127.0.0.1:5022"
     proxy_headers:
       - "X-Forwarded-Host {host}"
-      - "X-Forwarded-Proto {scheme}"
+      - "X-Forwarded-Proto https"
     extra_headers:
       - "X-Content-Type-Options nosniff"
       - "X-Frame-Options DENY"

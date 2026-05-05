@@ -14,11 +14,11 @@
     daemon_reload: true
     state: restarted
 
-#- name: Database endpoint deployment
-#  include_tasks: dbendpoint.yml
+- name: Database endpoint deployment
+  include_tasks: dbendpoint.yml
 
 - name: Webinterface deployment
   include_tasks: webinterface.yml
 
-#- name: Analysis/pgndpoint deployment
-#  include_tasks: pgndpoint.yml
+- name: Analysis/pgndpoint deployment
+  include_tasks: pgndpoint.yml
