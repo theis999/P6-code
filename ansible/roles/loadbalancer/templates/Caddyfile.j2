@@ -4,13 +4,19 @@
 {% endif %}
   # Optional global defaults:
   # admin off
-  # log {
-  #   output file /var/log/caddy/access.log
-  # }
+  log {
+    output file /var/log/caddy/caddy-runtime.log
+    format json
+    level INFO
+  }
 }
 
 {% for site in caddy_sites %}
 {{ site.listen }} {
+  log {
+    output file /var/log/caddy/{{ site.listen | replace(":", "_") | replace("/", "_") }}.access.log
+    format json
+  }
 {% if site.reverse_proxy is defined %}
   reverse_proxy {{ site.reverse_proxy }}{% if site.proxy_headers is defined and site.proxy_headers|length > 0 %} {
 {% for h in site.proxy_headers %}
