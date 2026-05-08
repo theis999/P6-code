@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -27,7 +28,7 @@ public class RegisterModel : PageModel
             ["ProductID"] = ProductID,
             ["authentikUserID"] = authentikUserID
         };
-
+        var client = new HttpClient();
         await client.PostAsync("smakdb.head9x.dk/boards", content.ToJsonString());
 
     }
