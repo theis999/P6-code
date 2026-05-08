@@ -43,7 +43,7 @@ public class RegisterModel : PageModel
         "application/json");
 
         var client = new HttpClient();
-        using HttpResponseMessage response = await client.PostAsync("smakdb.head9x.dk/boards", jsonContent);
+        using HttpResponseMessage response = await client.PostAsync("https://smakdb.head9x.dk/boards", jsonContent);
 
         return RedirectToPage("./Index");
     }
