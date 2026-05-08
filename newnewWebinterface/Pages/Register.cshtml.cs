@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 //using System.Web.Script.Serialization;
 
 
@@ -14,9 +15,6 @@ public class RegisterModel : PageModel
 {
     public string name;
     public string ProductID;
-
-
-
 
     public async Task<IActionResult> OnPostAsync()
     {
