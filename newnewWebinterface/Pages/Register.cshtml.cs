@@ -6,10 +6,8 @@ using System.Net.Http;
 using System.Security.Claims;
 using System;
 using System.Text;
-//using System.Text.Encoding;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-//using System.Web.Script.Serialization;
 
 
 namespace newnewWebinterface.Pages;
@@ -41,7 +39,7 @@ public class RegisterModel : PageModel
              ProductID = ProductID,
              authentikUserID = authentikUserID
          }),
-        //Encoding.UTF8,
+        System.Text.Encoding.UTF8,
         "application/json");
 
         var client = new HttpClient();
