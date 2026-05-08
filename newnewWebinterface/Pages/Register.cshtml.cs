@@ -1,30 +1,27 @@
-using System.Security.Claims;
-using System.Text.Json.Nodes;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims.ClaimTypes.NameIdentifier;
+using System.Text.Json;
+//using System.Web.Script.Serialization;
+
 
 namespace newnewWebinterface.Pages;
 
 [Authorize]
 public class RegisterModel : PageModel
 {
-    [BindProperty]
-    public string name { get; set; }
+    public string name;
+    public string ProductID;
 
-    [BindProperty]
-    public string ProductID { get; set; }
 
-    private readonly HttpClient client;
 
-    public RegisterModel(IHttpClientFactory httpClientFactory)
-    {
-        client = httpClientFactory.CreateClient();
-    }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        var authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string authentikUserID = User.FindFirstValue("sub");
 
         var content = new JsonObject
         {
@@ -33,8 +30,7 @@ public class RegisterModel : PageModel
             ["authentikUserID"] = authentikUserID
         };
 
-        await client.PostAsJsonAsync("https://smakdb.head9x.dk/boards", content);
+        await client.PostAsync("smakdb.head9x.dk/boards", content.ToJsonString());
 
-        return Page();
     }
 }

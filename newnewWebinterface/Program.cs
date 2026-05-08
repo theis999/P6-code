@@ -95,7 +95,6 @@ builder.Services.AddAuthentication(options =>
 
     options.SaveTokens = true;
     options.GetClaimsFromUserInfoEndpoint = true;    
-    JwtSecurityTokenHandler.DefaultMapInboundClaimTypes = true;
 });
 
 var requireAuthPolicy = new AuthorizationPolicyBuilder()
