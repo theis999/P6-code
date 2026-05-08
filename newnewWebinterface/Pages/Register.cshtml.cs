@@ -40,8 +40,8 @@ public class RegisterModel : PageModel
              name = name,
              ProductID = ProductID,
              authentikUserID = authentikUserID
-         }),
-        Encoding.UTF8,
+         })//,
+        //Encoding.UTF8,
         "application/json");
 
         var client = new HttpClient();
