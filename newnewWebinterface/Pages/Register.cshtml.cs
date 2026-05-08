@@ -21,15 +21,29 @@ public class RegisterModel : PageModel
     {
         //string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         string authentikUserID = User.FindFirstValue("sub");
+        /*
+                var content = new JsonContent
+                {
+                    ["name"] = name,
+                    ["ProductID"] = ProductID,
+                    ["authentikUserID"] = authentikUserID
+                };
 
-        var content = new JsonObject
-        {
-            ["name"] = name,
-            ["ProductID"] = ProductID,
-            ["authentikUserID"] = authentikUserID
-        };
+                */
+
+        using StringContent jsonContent = new(
+         JsonSerializer.Serialize(new
+         {
+             name = name,
+             ProductID = ProductID,
+             authentikUserID = authentikUserID
+         }),
+        Encoding.UTF8,
+        "application/json");
+
         var client = new HttpClient();
-        await client.PostAsync("smakdb.head9x.dk/boards", content.ToJsonString());
+        using HttpResponseMessage response = await client.PostAsync("smakdb.head9x.dk/boards", jsonContent);
 
+        return RedirectToPage("./Index");
     }
 }
