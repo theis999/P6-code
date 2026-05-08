@@ -20,7 +20,8 @@ public class RegisterModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string authentikUserID = User.FindFirstValue("sub");
 
         var content = new JsonObject
         {
