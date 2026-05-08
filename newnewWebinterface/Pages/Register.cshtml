@@ -18,8 +18,6 @@
     <input id="submit" type="submit" />
 </form>
 
-<p id="print-result"></p>
-
 <script>
 
 // Get value from /URL/
@@ -32,18 +30,6 @@ $( document ).ready(function() {
     $('#ProductID').val(searchParams.get("ProductID"));
 });
 
-
-
-
-// Override submit action
-/*$('#ProductForm').submit(function(){ 
-
-$.post("smakdb.head9x.dk/boards", $('#ProductForm').serialize(), function(result){
-    $("print-result").html(result);
-  });
-
-
-});*/
 </script>
 
 
