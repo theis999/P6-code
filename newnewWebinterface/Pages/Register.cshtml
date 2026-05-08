@@ -21,15 +21,17 @@
 <p id="print-result"></p>
 
 <script>
+
 // Get value from /URL/
 const searchParams = new URLSearchParams(window.location.search);  
 // Print
 console.log( "Product ID: " + searchParams.get("ProductID"));
 
 // Set Product ID value to value from URL
-$('#ProductID').val(searchParams.get("ProductID"));
+$( document ).ready(function() {
+    $('#ProductID').val(searchParams.get("ProductID"));
+});
 
-// Get user ID from jwt
 
 
 
