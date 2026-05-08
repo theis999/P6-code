@@ -1,0 +1,48 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register Board";
+}
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<p>Enter a board name:</p>
+
+<form id="ProductForm" method="post">
+    Board Name:
+    <input asp-for= "name" name="name"/>
+    Product ID:
+    <input asp-for= "ProductID" id="ProductID" type="text" disabled/>
+
+    <input id="submit" type="submit" />
+</form>
+
+<p id="print-result"></p>
+
+<script>
+// Get value from /URL/
+const searchParams = new URLSearchParams(window.location.search);  
+// Print
+console.log( "Product ID: " + searchParams.get("ProductID"));
+
+// Set Product ID value to value from URL
+$('#ProductID').val(searchParams.get("ProductID"));
+
+// Get user ID from jwt
+
+
+
+// Override submit action
+/*$('#ProductForm').submit(function(){ 
+
+$.post("smakdb.head9x.dk/boards", $('#ProductForm').serialize(), function(result){
+    $("print-result").html(result);
+  });
+
+
+});*/
+</script>
+
+
+
