@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims.ClaimTypes.NameIdentifier;
 using System.Text.Json;
+//using System.Web.Script.Serialization;
+
 
 namespace newnewWebinterface.Pages;
 
@@ -13,13 +15,13 @@ public class RegisterModel : PageModel
     public string name;
     public string ProductID;
 
-    string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
 
 
     public async Task<IActionResult> OnPostAsync()
     {
-        
+        string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         var content = new JsonObject
         {
             ["name"] = name,
@@ -27,7 +29,7 @@ public class RegisterModel : PageModel
             ["authentikUserID"] = authentikUserID
         };
 
-        await client.PostAsync("smakdb.head9x.dk/boards", content);
+        await client.PostAsync("smakdb.head9x.dk/boards", content.ToJsonString());
 
     }
 }
