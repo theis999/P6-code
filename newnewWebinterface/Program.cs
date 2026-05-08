@@ -34,6 +34,9 @@ builder.Services.AddAuthentication(options =>
     // and included by default. 
 
     //options.Scope.Add("some-scope");
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
     // ........................................................................
 
     // ........................................................................
@@ -91,12 +94,7 @@ builder.Services.AddAuthentication(options =>
     // ........................................................................
 
     options.SaveTokens = true;
-    options.GetClaimsFromUserInfoEndpoint = true;
-
-    options.Scope.Clear();
-    options.Scope.Add("openid");
-    options.Scope.Add("profile");
-    options.Scope.Add("email");
+    options.GetClaimsFromUserInfoEndpoint = true;    
 });
 
 var requireAuthPolicy = new AuthorizationPolicyBuilder()
