@@ -17,8 +17,10 @@ namespace newnewWebinterface.Pages;
 [Authorize]
 public class RegisterModel : PageModel
 {
-    public string name;
-    public string ProductID;
+    [BindProperty]
+    public string name { get; set; }
+    [BindProperty]
+    public string ProductID { get; set; }
     public string? AccessToken { get; set; }
 
     public async Task<IActionResult> OnPostAsync()
