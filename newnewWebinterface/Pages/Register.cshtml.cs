@@ -8,6 +8,7 @@ using System;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Diagnostics.Debug;
 
 
 namespace newnewWebinterface.Pages;
@@ -45,7 +46,7 @@ public class RegisterModel : PageModel
         var client = new HttpClient();
         using HttpResponseMessage response = await client.PostAsync("https://smakdb.head9x.dk/boards", jsonContent);
 
-        console.log("response: "+ response);
+        Page.Response.Write("<script>console.log('" + "response: " +response + "');</script>");
 
         return RedirectToPage("./Index");
     }
