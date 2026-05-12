@@ -18,9 +18,11 @@ public class RegisterModel : PageModel
 {
     public string name;
     public string ProductID;
+    public string? AccessToken { get; set; }
 
     public async Task<IActionResult> OnPostAsync()
     {
+
         string authentikUserID = User.FindFirstValue("sub");
         string authentikUserName = User.FindFirstValue("name");
 
