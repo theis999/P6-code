@@ -50,9 +50,10 @@ public class RegisterModel : PageModel
 
         using HttpResponseMessage response = await client.PostAsync("https://smakdb.head9x.dk/boards", jsonContent);
 
-
+        // Debug
+        System.Diagnostics.Debug.WriteLine("Token: "+ AccessToken);
         System.Diagnostics.Debug.WriteLine("Response: "+ response);
-
+        System.Diagnostics.Debug.WriteLine("JsonContent: "+ jsonContent);
 
         return RedirectToPage("./Index");
     }
