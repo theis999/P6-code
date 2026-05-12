@@ -10,6 +10,9 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
+using Duende.IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication;
+
 
 var  MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -31,7 +34,76 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnValidatePrincipal = async context =>
+        {
+            var expiresAt = context.Properties.GetTokenValue("expires_at");
+
+            if (!DateTimeOffset.TryParse(expiresAt, out var expires))
+                return;
+
+            // Refresh when less than 5 minutes remain
+            if (expires > DateTimeOffset.UtcNow.AddMinutes(5))
+                return;
+
+            var refreshToken = context.Properties.GetTokenValue("refresh_token");
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync();
+                return;
+            }
+
+            var oidcOptions = context.HttpContext.RequestServices
+                .GetRequiredService<IConfiguration>()
+                .GetSection("OpenIDConnectSettings");
+
+            using var http = new HttpClient();
+
+            var disco = await http.GetDiscoveryDocumentAsync(oidcOptions["Authority"]);
+
+            if (disco.IsError)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync();
+                return;
+            }
+
+            var tokenResponse = await http.RequestRefreshTokenAsync(new RefreshTokenRequest
+            {
+                Address = disco.TokenEndpoint,
+                ClientId = oidcOptions["ClientId"],
+                ClientSecret = oidcOptions["ClientSecret"],
+                RefreshToken = refreshToken
+            });
+
+            if (tokenResponse.IsError)
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync();
+                return;
+            }
+
+            context.Properties.UpdateTokenValue("access_token", tokenResponse.AccessToken);
+
+            if (!string.IsNullOrWhiteSpace(tokenResponse.RefreshToken))
+                context.Properties.UpdateTokenValue("refresh_token", tokenResponse.RefreshToken);
+
+            context.Properties.UpdateTokenValue(
+                "expires_at",
+                DateTimeOffset.UtcNow
+                    .AddSeconds(tokenResponse.ExpiresIn)
+                    .ToString("o")
+            );
+
+            context.ShouldRenew = true;
+        }
+    };
+})
 .AddOpenIdConnect(options =>
 {
     // ........................................................................
@@ -46,9 +118,11 @@ builder.Services.AddAuthentication(options =>
     // and included by default. 
 
     //options.Scope.Add("some-scope");
+    options.Scope.Clear();
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
+    options.Scope.Add("offline_access");
     // ........................................................................
 
     // ........................................................................
