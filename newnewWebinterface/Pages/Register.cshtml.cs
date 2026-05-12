@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 
 
 namespace newnewWebinterface.Pages;
