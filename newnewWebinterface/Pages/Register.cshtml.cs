@@ -20,17 +20,7 @@ public class RegisterModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        //string authentikUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         string authentikUserID = User.FindFirstValue("sub");
-        /*
-                var content = new JsonContent
-                {
-                    ["name"] = name,
-                    ["ProductID"] = ProductID,
-                    ["authentikUserID"] = authentikUserID
-                };
-
-                */
 
         using StringContent jsonContent = new(
          JsonSerializer.Serialize(new
@@ -45,6 +35,7 @@ public class RegisterModel : PageModel
         var client = new HttpClient();
         using HttpResponseMessage response = await client.PostAsync("https://smakdb.head9x.dk/boards", jsonContent);
 
+        System.Diagnostics.Debug.WriteLine("This will be displayed in output window");
 
         return RedirectToPage("./Index");
     }
