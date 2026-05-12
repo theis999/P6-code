@@ -24,17 +24,15 @@
     // Print
     console.log("Product ID: " + searchParams.get("ProductID"));
 
-    
-    if (searchParams.get("ProductID") == null) {
-        // Enable field if not found in URL
-        $('#ProductID').disabled = false;
-    } else {
-        // Set Product ID value to value from URL
-        $(document).ready(function () {
+    $(document).ready(function () {
+        if (searchParams.get("ProductID") == null) {
+            // Enable field if not found in URL
+            $('#ProductID').disabled = false;
+        } else {
+            // Set Product ID value to value from URL
             $('#ProductID').val(searchParams.get("ProductID"));
-        });
-    }
-
+        }
+    });
 </script>
 
 
