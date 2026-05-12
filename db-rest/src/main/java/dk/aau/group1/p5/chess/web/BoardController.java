@@ -30,7 +30,6 @@ public class BoardController {
 
     @PostMapping("/boards")
     public Board addBoard(@RequestBody Board new_board) {
-
         return service.save(new_board);
     }
 

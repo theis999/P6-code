@@ -24,7 +24,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-    
+
+    @Column(name = "authentik_user_id", nullable = true)
+    private String authentik_user_id;
+
     @Column(name = "name", nullable = false)
     private String name;
 
@@ -33,13 +36,16 @@ public class User {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + ((authentik_user_id == null) ? 0 : authentik_user_id.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((boards == null) ? 0 : boards.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", name=" + name + ", boards=" + boards + "]";
+        return "User [id=" + id + ", authentik_user_id=" + authentik_user_id + ", name=" + name + ", boards=" + boards
+                + "]";
     }
 
     public String toStringSimple() {
@@ -61,10 +67,20 @@ public class User {
                 return false;
         } else if (!id.equals(other.id))
             return false;
+        if (authentik_user_id == null) {
+            if (other.authentik_user_id != null)
+                return false;
+        } else if (!authentik_user_id.equals(other.authentik_user_id))
+            return false;
         if (name == null) {
             if (other.name != null)
                 return false;
         } else if (!name.equals(other.name))
+            return false;
+        if (boards == null) {
+            if (other.boards != null)
+                return false;
+        } else if (!boards.equals(other.boards))
             return false;
         return true;
     }
@@ -86,6 +102,14 @@ public class User {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getAuthentik_user_id() {
+        return authentik_user_id;
+    }
+
+    public void setAuthentik_user_id(String authentik_user_id) {
+        this.authentik_user_id = authentik_user_id;
     }
 
     public String getName() {

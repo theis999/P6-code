@@ -28,8 +28,11 @@ public class RegisterModel : PageModel
          {
              name = name,
              ProductID = ProductID,
-             authentikUserID = authentikUserID,
-             authentikUserName = authentikUserName
+              user = new {
+                name = authentikUserName,
+            authentikUserID = authentikUserID
+        }
+             
          }),
         System.Text.Encoding.UTF8,
         "application/json");

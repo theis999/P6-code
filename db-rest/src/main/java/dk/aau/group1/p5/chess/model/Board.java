@@ -38,6 +38,29 @@ public class Board {
         this.id = id;
     }
 
+    @Column(name = "product_id", nullable = true)
+    private String product_id;
+
+    public String getProduct_id() {
+        return product_id;
+    }
+
+    public void setProduct_id(String product_id) {
+        this.product_id = product_id;
+    }
+
+    @Column(name = "name", nullable = true)
+    private String name;
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name="user_id", nullable=false)
     @JsonBackReference
@@ -78,7 +101,10 @@ public class Board {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + ((product_id == null) ? 0 : product_id.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((user == null) ? 0 : user.hashCode());
+        result = prime * result + ((games == null) ? 0 : games.hashCode());
         return result;
     }
 
@@ -96,17 +122,33 @@ public class Board {
                 return false;
         } else if (!id.equals(other.id))
             return false;
+        if (product_id == null) {
+            if (other.product_id != null)
+                return false;
+        } else if (!product_id.equals(other.product_id))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
         if (user == null) {
             if (other.user != null)
                 return false;
         } else if (!user.equals(other.user))
+            return false;
+        if (games == null) {
+            if (other.games != null)
+                return false;
+        } else if (!games.equals(other.games))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "Board [id=" + id + ", user=" + user + ", games="+ games +"}]";
+        return "Board [id=" + id + ", product_id=" + product_id + ", name=" + name + ", user=" + user + ", games="
+                + games + "]";
     }
 
 }
