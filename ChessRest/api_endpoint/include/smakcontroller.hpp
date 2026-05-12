@@ -75,25 +75,31 @@ public:
     using namespace chess;
 
     auto incoming_game = cl->getGameById(id);
+
+    if (incoming_game->getStatusCode() != Status::CODE_200.code) {
+          return createResponse(Status::CODE_503,
+                                "Unable to retrieve game from database.");
+        }
+
     //auto deb = incoming_game->readBodyToString();
     //auto d = incoming_game->readBodyToDto<class Wrapper>(const base::ObjectHandle<data::mapping::ObjectMapper> &objectMapper)
     auto dto = incoming_game->readBodyToDto<Object<models::GameDTO>>(
         getDefaultObjectMapper());
 
-    if (incoming_game->getStatusCode() != Status::CODE_200.code) {
-      return createResponse(Status::CODE_503,
-                            "Unable to retrieve game from database.");
-    }
 
     auto incoming_moves = cl->getMovesByGameId(id);
-    auto move_dtos =
-        incoming_moves->readBodyToDto<oatpp::Vector<Object<models::MoveDTO>>>(
-            getDefaultObjectMapper());
 
     if (incoming_moves->getStatusCode() != Status::CODE_200.code) {
       return createResponse(Status::CODE_503,
                             "Unable to retrieve moves from database.");
     }
+
+
+    auto move_dtos =
+        incoming_moves->readBodyToDto<oatpp::Vector<Object<models::MoveDTO>>>(
+            getDefaultObjectMapper());
+
+
 
     std::vector<chess::Move> chess_moves{};
     chess_moves.reserve(move_dtos->size());
