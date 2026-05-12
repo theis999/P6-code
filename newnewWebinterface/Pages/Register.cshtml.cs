@@ -27,10 +27,10 @@ public class RegisterModel : PageModel
          JsonSerializer.Serialize(new
          {
              name = name,
-             ProductID = ProductID,
+             product_id = ProductID,
               user = new {
                 name = authentikUserName,
-            authentikUserID = authentikUserID
+                authentik_user_id = authentikUserID
         }
              
          }),
