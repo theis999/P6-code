@@ -45,7 +45,7 @@ public class RegisterModel : PageModel
 
         var client = new HttpClient();
 
-
+        
         AccessToken = await HttpContext.GetTokenAsync("access_token");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
