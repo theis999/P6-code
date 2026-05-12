@@ -32,13 +32,17 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-page="/Register">Register Board</a>
-                    </li>                    
+                    </li>
                 </ul>
                 @if (Context.User.Identity!.IsAuthenticated)
-                {   
-                    <ul class="nav-item">
-                        <span class="nav-link text-dark">Hi @Context.User.Identity.Name</span>
-                        <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Logout</a>
+                {
+                    <ul class="navbar-nav flex-grow-1">
+                        <li>
+                            < span class="nav-link text-dark"> Hi @Context.User.Identity.Name </ span>
+                        </li>
+                        <li class="nav-item">
+                            < a class="nav-link text-dark" asp - area="" asp - page="/Logout"> Logout </ a>
+                        </li>
                     </ul>
                 }
                 else
