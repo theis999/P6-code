@@ -11,24 +11,29 @@
 
 <form id="ProductForm" method="post">
     Board Name:
-    <input asp-for= "name" name="name"/>
+    <input asp-for="name" name="name" />
     Product ID:
-    <input asp-for= "ProductID" id="ProductID" type="text" disabled/>
+    <input asp-for="ProductID" id="ProductID" type="text" disabled />
 
     <input id="submit" type="submit" />
 </form>
 
 <script>
+    // Get value from /URL/
+    const searchParams = new URLSearchParams(window.location.search);
+    // Print
+    console.log("Product ID: " + searchParams.get("ProductID"));
 
-// Get value from /URL/
-const searchParams = new URLSearchParams(window.location.search);  
-// Print
-console.log( "Product ID: " + searchParams.get("ProductID"));
-
-// Set Product ID value to value from URL
-$( document ).ready(function() {
-    $('#ProductID').val(searchParams.get("ProductID"));
-});
+    
+    if (searchParams.get("ProductID") == null) {
+        // Enable field if not found in URL
+        $('#ProductID').disabled = false;
+    } else {
+        // Set Product ID value to value from URL
+        $(document).ready(function () {
+            $('#ProductID').val(searchParams.get("ProductID"));
+        });
+    }
 
 </script>
 
