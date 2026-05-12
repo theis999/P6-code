@@ -39,6 +39,12 @@ public class RegisterModel : PageModel
         "application/json");
 
         var client = new HttpClient();
+
+
+        AccessToken = await HttpContext.GetTokenAsync("access_token");
+        _HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+
+
         using HttpResponseMessage response = await client.PostAsync("https://smakdb.head9x.dk/boards", jsonContent);
 
 
