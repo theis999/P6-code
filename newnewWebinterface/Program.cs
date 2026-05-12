@@ -46,7 +46,7 @@ builder.Services.AddAuthentication(options =>
                 return;
 
             // Refresh when less than 5 minutes remain
-            if (expires > DateTimeOffset.UtcNow.AddMinutes(5))
+            if (expires > DateTimeOffset.UtcNow.AddMinutes(2))
                 return;
 
             var refreshToken = context.Properties.GetTokenValue("refresh_token");
