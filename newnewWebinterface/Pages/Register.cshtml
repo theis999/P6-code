@@ -27,7 +27,8 @@
     $(document).ready(function () {
         if (searchParams.get("ProductID") == null) {
             // Enable field if not found in URL
-            $('#ProductID').disabled = false;
+            console.log("Product ID is null, enabling form");
+            document.getElementById('ProductID').disabled = false;
         } else {
             // Set Product ID value to value from URL
             $('#ProductID').val(searchParams.get("ProductID"));
