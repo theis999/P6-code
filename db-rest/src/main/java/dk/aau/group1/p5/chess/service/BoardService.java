@@ -41,7 +41,7 @@ public class BoardService {
             if (list.isEmpty())
                 u2 = urepository.save(u);
             else 
-                u2 = list.getFirst();
+                u2 = list.get(0);
             board.setUser(u2);
         }
 
