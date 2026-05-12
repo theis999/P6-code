@@ -21,13 +21,15 @@ public class RegisterModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
+        string authentikUserName = User.FindFirstValue("name");
 
         using StringContent jsonContent = new(
          JsonSerializer.Serialize(new
          {
              name = name,
              ProductID = ProductID,
-             authentikUserID = authentikUserID
+             authentikUserID = authentikUserID,
+             authentikUserName = authentikUserName
          }),
         System.Text.Encoding.UTF8,
         "application/json");
