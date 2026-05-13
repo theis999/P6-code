@@ -43,26 +43,27 @@ public class IndexModel : PageModel
         public long? id { get; set; }
         string? product_id { get; set; }
         public string? name { get; set; }
+        public IEnumerable<Game>? games { get; set; }
     };
 
     public async Task<PageResult> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
 
-        var client = new HttpClient();
+       /// var client = new HttpClient();
         AccessToken = await HttpContext.GetTokenAsync("access_token");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+       /// client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
-        using HttpResponseMessage response = await client.GetAsync("https://smakdb.head9x.dk/user/get/" + authentikUserID);
+       /// using HttpResponseMessage response = await client.GetAsync("https://smakdb.head9x.dk/user/get/" + authentikUserID);
 
         var boardclient = new HttpClient();
         boardclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
         using HttpResponseMessage boardresponse = await boardclient.GetAsync("https://smakdb.head9x.dk/boards/get/" + authentikUserID);
         // Debug
-        System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
-        System.Diagnostics.Debug.WriteLine("Response: " + response);
-        Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
+        //System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
+        //System.Diagnostics.Debug.WriteLine("Response: " + response);
+       /// Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
         Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
 
         return Page();

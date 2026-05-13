@@ -48,49 +48,56 @@
                     </table>
                 </div>
 
-                <script>
-                    function validateDatalist(input) {
-                        var list = input.list;
-                        var options = list.options;
-                        var isValid = false;
-    
-                        // Check if input value matches any option value
-                        for (var i = 0; i < options.length; i++) {
-                            if (input.value === options[i].value) {
-                                isValid = true;
-                                break;
-                            }
-                        }
-    
-                        // If no match found, clear the input
-                        if (!isValid) {
-                            input.value = "";
-                        }
-                    }
-                </script>
-
-
                 <form id="gameform" style="width:auto; ">
-                    <div>
-                        <input id="board" type="string" list="Board" name="board" value="@Model.Boards?.LastOrDefault()?.id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
-                        <input id="gameidinput" type="number" list="Game" name="game" onchange="validateDatalist(this)" value="@Model.Games?.LastOrDefault()?.id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
+                    <div style="display: flex; flex-direction: column;">
+                        <select id="board" name="board" style="max-width: 12em; margin-top: 1em;">
+                            @foreach (var board in Model.Boards ?? Enumerable.Empty<IndexModel.Board>())
+                            {
+                                <option value="@board.name">@board.name</option>
+                            }
+                        </select>
+                        <select id="gameidinput"
+                                name="game"
+                                style="max-width: 12em; margin-top: 1em;">
+                        </select>
                     </div>
                     <div style="position: relative; left: 0em">
                         <input type="submit" width="100%" style="text-align: center; width: 100%;" class="button" value="Select ID">
                     </div>                    
                 </form>
-<datalist id="Game">
-    @foreach (var game in Model.Games)
-    {
-        <option value="@game.id"></option>
+
+<script>
+    const boards = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Boards));
+
+    function updateGamesForSelectedBoard() {
+        const selectedBoardName = document.getElementById("board").value;
+        const gameSelect = document.getElementById("gameidinput");
+
+        gameSelect.innerHTML = "";
+
+        const selectedBoard = boards.find(b => b.name === selectedBoardName);
+
+        if (!selectedBoard || !selectedBoard.games) {
+            return;
+        }
+
+        selectedBoard.games.forEach(game => {
+            const option = document.createElement("option");
+
+            option.value = game.id;
+            option.textContent = game.id;
+
+            gameSelect.appendChild(option);
+        });
     }
-</datalist>
-<datalist id="Board">
-    @foreach (var board in Model.Boards)
-    {
-        <option value="@board.name"></option>
-    }
-</datalist>
+
+    document.getElementById("board")
+        .addEventListener("change", updateGamesForSelectedBoard);
+
+    updateGamesForSelectedBoard();
+</script>
+
+
             </div>
         </div>
     </div>
