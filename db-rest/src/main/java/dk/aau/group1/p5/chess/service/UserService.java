@@ -12,7 +12,7 @@ import dk.aau.group1.p5.chess.repository.UserRepository;
 public class UserService {
     private final UserRepository repository;
 
-    public UserService(UserRepository userRepository){
+    public UserService(UserRepository userRepository) {
         repository = userRepository;
     }
 
@@ -25,9 +25,18 @@ public class UserService {
     }
 
     public User save(User user) {
-        assert(user != null);
+        assert (user != null);
         return repository.save(user);
     }
 
+    public User getUserFromAuthID(String AuthentikUserID) {
+        var list = repository.getByAuthentikUserId(AuthentikUserID);
+        if (list.isEmpty()) {
+            return null;
+        } else {
+            User u = list.get(0);
+            return u;
+        }
+    }
 
 }
