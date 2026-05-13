@@ -35,7 +35,7 @@ public class IndexModel : PageModel
         string? gamestart { get; set; }
     };
 
-    public async Task<IEnumerable<Game>?> OnGetAsync()
+    public async Task<PageResult> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
 
@@ -49,6 +49,6 @@ public class IndexModel : PageModel
         System.Diagnostics.Debug.WriteLine("Response: " + response);
         Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
 
-        return Games;
+        return Page();
     }
 }
