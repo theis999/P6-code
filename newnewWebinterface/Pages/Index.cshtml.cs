@@ -30,7 +30,7 @@ public class IndexModel : PageModel
 
     public class Game
     {
-        long? id { get; set; }
+        public long? id { get; set; }
         string? gamestate { get; set; }
         string? gamestart { get; set; }
     };

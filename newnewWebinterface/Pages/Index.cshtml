@@ -48,20 +48,41 @@
                     </table>
                 </div>
 
+                <script>
+                    function validateDatalist(input) {
+                        var list = input.list;
+                        var options = list.options;
+                        var isValid = false;
+    
+                        // Check if input value matches any option value
+                        for (var i = 0; i < options.length; i++) {
+                            if (input.value === options[i].value) {
+                                isValid = true;
+                                break;
+                            }
+                        }
+    
+                        // If no match found, clear the input
+                        if (!isValid) {
+                            input.value = "";
+                        }
+                    }
+                </script>
+
+
                 <form id="gameform" style="width:auto; ">
                     <div>
-                        <input id="gameidinput" type="number" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
+                        <input id="gameidinput" type="number" list="Game" name="game" onchange="validateDatalist(this)" value="@Model.Games?.Last().id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
                     </div>
                     <div style="position: relative; left: 0em">
                         <input type="submit" width="100%" style="text-align: center; width: 100%;" class="button" value="Select ID">
                     </div>                    
                 </form>
-                <input type="text" list="" />
-<datalist id="Game" method="get">
-  <option>Volvo</option>
-  <option>Saab</option>
-  <option>Mercedes</option>
-  <option>Audi</option>
+<datalist id="Game">
+    @foreach (var game in Model.Games)
+    {
+        <option value="@game.id"></option>
+    }
 </datalist>
             </div>
         </div>
