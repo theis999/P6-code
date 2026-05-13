@@ -49,4 +49,14 @@ public class BoardService {
             return repository.save(board);
         
     }
+
+        public User getUserFromAuthID(String AuthentikUserID) {
+        var list = urepository.getByAuthentikUserId(AuthentikUserID);
+        if (list.isEmpty()) {
+            return null;
+        } else {
+            User u = list.get(0);
+            return u;
+        }
+    }
 }

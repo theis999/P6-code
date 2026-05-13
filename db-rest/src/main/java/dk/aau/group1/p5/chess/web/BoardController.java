@@ -1,7 +1,7 @@
 package dk.aau.group1.p5.chess.web;
 
+import java.util.ArrayList;
 import java.util.List;
-
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import dk.aau.group1.p5.chess.model.Board;
+import dk.aau.group1.p5.chess.model.Game;
+import dk.aau.group1.p5.chess.model.User;
+
 import dk.aau.group1.p5.chess.service.BoardService;
 
 @CrossOrigin(origins = "*")
@@ -28,6 +31,16 @@ public class BoardController {
         return service.getAll();
     }
 
+    @GetMapping("/boards/get/{AuthentikUserID}")
+    public List<Board> getBoardsByAuthID(@PathVariable String AuthentikUserID) {
+        User u = service.getUserFromAuthID(AuthentikUserID);
+        var boards = u.getBoards();
+        if (u != null) {
+            return boards;
+        }
+        return null;
+    }
+
     @PostMapping("/boards")
     public Board addBoard(@RequestBody Board new_board) {
         return service.save(new_board);
@@ -35,9 +48,8 @@ public class BoardController {
 
     @PatchMapping("/boards/{id}")
     public Board updateBoard(@PathVariable Long id, @RequestBody Board updated_board) {
-        
+
         return service.save(updated_board);
     }
-    
 
 }
