@@ -22,7 +22,7 @@ public class IndexModel : PageModel
 {
 
     [BindProperty]
-    public IEnumerable<Game> Games { get; set; }
+    public IEnumerable<Game>? Games { get; set; }
 
     public string? AccessToken { get; set; }
 
