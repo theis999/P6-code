@@ -72,7 +72,7 @@
 
                 <form id="gameform" style="width:auto; ">
                     <div>
-                        <input id="gameidinput" type="number" list="Game" name="game" onchange="validateDatalist(this)" value="@Model.Games?.Last().id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
+                        <input id="gameidinput" type="number" list="Game" name="game" onchange="validateDatalist(this)" value="@Model.Games?.LastOrDefault()?.id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
                     </div>
                     <div style="position: relative; left: 0em">
                         <input type="submit" width="100%" style="text-align: center; width: 100%;" class="button" value="Select ID">
