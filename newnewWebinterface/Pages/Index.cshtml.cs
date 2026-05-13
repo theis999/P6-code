@@ -29,6 +29,9 @@ public class IndexModel : PageModel
 
     [BindProperty]
     public IEnumerable<game> Games { get; set; }
+
+    public string? AccessToken { get; set; }
+    
     public void OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
