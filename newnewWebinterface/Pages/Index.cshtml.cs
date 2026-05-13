@@ -23,6 +23,13 @@ public class game
     string gamestart;
 };
 
+public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IEnumerable<T> input)
+{
+    foreach (var value in input)
+    {
+        yield return value;
+    }
+}
 
 [Authorize]
 public class IndexModel : PageModel
@@ -32,6 +39,7 @@ public class IndexModel : PageModel
     public IEnumerable<game> Games { get; set; }
 
     public string? AccessToken { get; set; }
+
 
     public async IAsyncEnumerable<game> OnGetAsync()
     {
@@ -46,6 +54,7 @@ public class IndexModel : PageModel
         System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         System.Diagnostics.Debug.WriteLine("Response: " + response);
         Games = JsonSerializer.Deserialize<game>(response.Content);
-        return Games.ToAsyncEnumerable();
+
+        return Games.AsAsyncEnumerable();
     }
 }
