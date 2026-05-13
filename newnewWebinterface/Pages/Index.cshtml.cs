@@ -17,24 +17,25 @@ using System.Collections;
 namespace newnewWebinterface.Pages;
 
 [Authorize]
+
 public class IndexModel : PageModel
 {
 
     [BindProperty]
-    public IEnumerable<game> Games { get; set; }
+    public IEnumerable<Game> Games { get; set; }
 
     public string? AccessToken { get; set; }
 
 
 
-    public class game
+    public class Game
     {
-        long id;
-        string gamestate;
-        string gamestart;
+        long? id { get; set; }
+        string? gamestate { get; set; }
+        string? gamestart { get; set; }
     };
 
-    public async IAsyncEnumerable<game> OnGetAsync()
+    public async Task<IEnumerable<Game>?> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
 
@@ -46,16 +47,8 @@ public class IndexModel : PageModel
         // Debug
         System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         System.Diagnostics.Debug.WriteLine("Response: " + response);
-        Games = JsonSerializer.Deserialize<game>(response.Content);
+        Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
 
-        return Games.AsAsyncEnumerable();
-    }
-
-    public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IEnumerable<T> input)
-    {
-        foreach (var value in input)
-        {
-            yield return value;
-        }
+        return Games;
     }
 }
