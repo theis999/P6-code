@@ -14,21 +14,20 @@ using System.Collections;
 
 namespace newnewWebinterface.Pages;
 
-private class game
+public class game
 {
     long id;
     string gamestate;
     string gamestart;
 };
 
-[BindProperty]
-
-public IEnumerable<game> Games { get; set; }
-
 
 [Authorize]
 public class IndexModel : PageModel
 {
+
+    [BindProperty]
+    public IEnumerable<game> Games { get; set; }
     public void OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
@@ -42,6 +41,6 @@ public class IndexModel : PageModel
         System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         System.Diagnostics.Debug.WriteLine("Response: " + response);
         Games = JsonSerializer.Deserialize<game>(response.Content);
-       
+
     }
 }
