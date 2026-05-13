@@ -24,6 +24,9 @@ public class IndexModel : PageModel
     [BindProperty]
     public IEnumerable<Game>? Games { get; set; }
 
+    [BindProperty]
+    public IEnumerable<Board>? Boards { get; set; }
+
     public string? AccessToken { get; set; }
 
 
@@ -35,6 +38,13 @@ public class IndexModel : PageModel
         string? gamestart { get; set; }
     };
 
+    public class Board
+    {
+        public long? id { get; set; }
+        string? product_id { get; set; }
+        public string? name { get; set; }
+    };
+
     public async Task<PageResult> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
@@ -44,10 +54,16 @@ public class IndexModel : PageModel
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
 
         using HttpResponseMessage response = await client.GetAsync("https://smakdb.head9x.dk/user/get/" + authentikUserID);
+
+        var boardclient = new HttpClient();
+        boardclient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
+
+        using HttpResponseMessage boardresponse = await boardclient.GetAsync("https://smakdb.head9x.dk/boards/get/" + authentikUserID);
         // Debug
         System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         System.Diagnostics.Debug.WriteLine("Response: " + response);
         Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
+        Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
 
         return Page();
     }

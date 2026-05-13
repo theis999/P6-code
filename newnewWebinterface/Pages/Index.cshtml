@@ -72,6 +72,7 @@
 
                 <form id="gameform" style="width:auto; ">
                     <div>
+                        <input id="board" type="string" list="Board" name="board" value="@Model.Boards?.LastOrDefault()?.id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
                         <input id="gameidinput" type="number" list="Game" name="game" onchange="validateDatalist(this)" value="@Model.Games?.LastOrDefault()?.id" min="0" style="max-width: 12em; margin-top: 1em;" placeholder="Input game ID here"/>
                     </div>
                     <div style="position: relative; left: 0em">
@@ -82,6 +83,12 @@
     @foreach (var game in Model.Games)
     {
         <option value="@game.id"></option>
+    }
+</datalist>
+<datalist id="Board">
+    @foreach (var board in Model.Boards)
+    {
+        <option value="@board.name"></option>
     }
 </datalist>
             </div>
