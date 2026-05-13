@@ -16,10 +16,6 @@ using System.Collections;
 
 namespace newnewWebinterface.Pages;
 
-
-
-
-
 [Authorize]
 public class IndexModel : PageModel
 {
@@ -37,7 +33,7 @@ public class IndexModel : PageModel
         string gamestate;
         string gamestart;
     };
-    
+
     public async IAsyncEnumerable<game> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
