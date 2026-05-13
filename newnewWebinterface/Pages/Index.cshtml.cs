@@ -31,8 +31,8 @@ public class IndexModel : PageModel
     public IEnumerable<game> Games { get; set; }
 
     public string? AccessToken { get; set; }
-    
-    public void OnGetAsync()
+
+    public async IEnumerable<game> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
 
@@ -45,6 +45,6 @@ public class IndexModel : PageModel
         System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         System.Diagnostics.Debug.WriteLine("Response: " + response);
         Games = JsonSerializer.Deserialize<game>(response.Content);
-
+        return Games;
     }
 }
