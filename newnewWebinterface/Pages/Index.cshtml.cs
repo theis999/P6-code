@@ -23,13 +23,7 @@ public class game
     string gamestart;
 };
 
-public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IEnumerable<T> input)
-{
-    foreach (var value in input)
-    {
-        yield return value;
-    }
-}
+
 
 [Authorize]
 public class IndexModel : PageModel
@@ -56,5 +50,13 @@ public class IndexModel : PageModel
         Games = JsonSerializer.Deserialize<game>(response.Content);
 
         return Games.AsAsyncEnumerable();
+    }
+
+    public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IEnumerable<T> input)
+    {
+        foreach (var value in input)
+        {
+            yield return value;
+        }
     }
 }
