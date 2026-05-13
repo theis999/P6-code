@@ -16,12 +16,7 @@ using System.Collections;
 
 namespace newnewWebinterface.Pages;
 
-public class game
-{
-    long id;
-    string gamestate;
-    string gamestart;
-};
+
 
 
 
@@ -35,6 +30,14 @@ public class IndexModel : PageModel
     public string? AccessToken { get; set; }
 
 
+
+    public class game
+    {
+        long id;
+        string gamestate;
+        string gamestart;
+    };
+    
     public async IAsyncEnumerable<game> OnGetAsync()
     {
         string authentikUserID = User.FindFirstValue("sub");
