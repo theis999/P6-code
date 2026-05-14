@@ -1,0 +1,27 @@
+syntax = "proto3";
+import "nanopb.proto";
+
+enum Smak_MoveType {
+    SMAKMOVE_EN_PASSANT = 0;
+    SMAKMOVE_CASTLING = 1;
+    SMAKMOVE_PROMOTION = 2;
+    SMAKMOVE_NORMAL = 3;
+}
+
+message Smak_ChessMove
+{
+    uint64 id = 1;
+    uint32 ply = 2;
+    uint32 from = 3;
+    uint32 to = 4;
+    bytes piece = 5 [ (nanopb).max_size = 1 ];
+    bytes captured = 6 [ (nanopb).max_size = 1 ];
+    Smak_MoveType move_type = 7;
+    //string move_type = 7 [ (nanopb).max_size = 10 ]; // 10 is max length of our movetype strings (with NULL terminator)
+}
+
+message BoardMove
+{
+    int32 pin = 1;
+    bool is_up = 2;
+}

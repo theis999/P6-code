@@ -1,0 +1,31 @@
+TOKEN=$(curl -s -X POST https://smakauth.head9x.dk/application/o/token/  -H "Content-Type: application/x-www-form-urlencoded"   -d "grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write" | jq -r '.access_token')
+
+curl -d '{"name": "Theis"}' https://smak.head9x.dk/users -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"name": "Morten"}' https://smak.head9x.dk/users -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+
+curl -v -d '{"name":"TestBoard1","ProductID":"1111","user":{"name": "Morten","authentik_user_id":"a848ea088e0520cbfa072194fc70f65e37075e58e7458d21a72adff205aa8e12"}}' https://smakdb.head9x.dk/boards -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -v -d '{"name":"TestBoard2","ProductID":"1112","user":{"name": "authentik admin","authentik_user_id":"94dd591a0e62473854490e854ef0a88e202418c60cea549b90bc337f2c92a2dc"}}' https://smakdb.head9x.dk/boards -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+
+
+curl -d '{"gamestate": "NOT_STARTED", "board":{"id":"1"}}' https://smakdb.head9x.dk/games -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"gamestate": "WHITE_WIN", "board":{"id":"1"}}' https://smakdb.head9x.dk/games -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"gamestate": "DRAW_FIFTY_MOVES", "board":{"id":"2"}}' https://smakdb.head9x.dk/games -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+
+curl -d '{"id": "1", "ply_number": "1", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "55", "to_square": "47" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "1", "ply_number": "2", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "8", "to_square": "16" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "1", "ply_number": "3", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "52", "to_square": "36" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "1", "ply_number": "4", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "9", "to_square": "25" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "1", "ply_number": "5", "move_type": "normal", "piece_moved": "K", "piece_captured": "Z", "from_square": "62", "to_square": "45" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "2", "ply_number": "1", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "55", "to_square": "47" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "2", "ply_number": "2", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "8", "to_square": "16" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "2", "ply_number": "3", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "52", "to_square": "36" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "2", "ply_number": "4", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "9", "to_square": "25" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "2", "ply_number": "5", "move_type": "normal", "piece_moved": "K", "piece_captured": "Z", "from_square": "62", "to_square": "45" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "3", "ply_number": "1", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "55", "to_square": "47" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "3", "ply_number": "2", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "8", "to_square": "16" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "3", "ply_number": "3", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "52", "to_square": "36" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "3", "ply_number": "4", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "9", "to_square": "25" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+curl -d '{"id": "3", "ply_number": "5", "move_type": "normal", "piece_moved": "K", "piece_captured": "Z", "from_square": "62", "to_square": "45" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+
+curl -s -D "/dev/stderr" -X GET "https://smakdb.head9x.dk/users" -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" | jq
+curl -s -X GET "https://smakdb.head9x.dk/moves" -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" | jq

@@ -1,0 +1,4 @@
+CompileFlags:
+    Remove: [-f*, -m*]
+InlayHints:
+    ParameterNames: false

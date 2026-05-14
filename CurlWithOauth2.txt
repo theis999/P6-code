@@ -1,0 +1,22 @@
+request token
+curl -X POST https://smakauth.head9x.dk/application/o/token/   -H "Content-Type: application/x-www-form-urlencoded"   -d "grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write"
+
+
+request token and print to console
+curl -s -D "/dev/stderr" -X POST https://smakauth.head9x.dk/application/o/token/  -H "Content-Type: application/x-www-form-urlencoded"   -d "grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write" | jq
+
+
+Get and save access token as variable
+TOKEN=$(curl -s -X POST https://smakauth.head9x.dk/application/o/token/  -H "Content-Type: application/x-www-form-urlencoded"   -d "grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write" | jq -r '.access_token') && echo $TOKEN
+
+
+Add user
+curl -v -d '{"name": "Theis"}' https://smakdb.head9x.dk/users -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
+
+
+Pretty print content and header
+curl -s -D "/dev/stderr" -X GET "https://smakdb.head9x.dk/users" -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" | jq
+
+
+Create Board
+curl -v -d '{"name":"TestBoard","ProductID":"1111","user":{"name": "aName","authentik_user_id":"mitauthidstreng"}}' https://smakdb.head9x.dk/boards -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
