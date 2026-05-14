@@ -15,11 +15,8 @@
     };
 };
 
-
-
 / {
     chosen {
         smak,uart = &uart1;
     };
-
 };

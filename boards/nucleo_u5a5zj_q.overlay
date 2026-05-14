@@ -1,0 +1,14 @@
+&zephyr_udc0 {
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+		label = "Zephyr USB CDC-ACM";
+	};
+};
+
+/ {
+	chosen {
+		// zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &usart1;
+		zephyr,console = &usart1;
+	};
+};

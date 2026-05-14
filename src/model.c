@@ -1,8 +1,15 @@
 #include "model.h"
+#include "pb.h"
+#include <pb_decode.h>
+#include <pb_encode.h>
+#include <src/smak.pb.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zephyr/data/json.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
+
+LOG_MODULE_REGISTER(model, LOG_LEVEL_DBG);
 
 #define CREATE_STATE_STRING_ARRAY(name) [name] = #name
 
@@ -116,4 +123,26 @@ uint8_t pin(const char *restrict str)
     uint8_t r    = (8 - rank) << 3;
 
     return (r | file);
+}
+
+int smak_move_to_pb(struct smak_json_obj *obj, uint8_t *buf)
+{
+    Smak_ChessMove mv = {
+        .id        = obj->id,
+        .ply       = obj->ply,
+        .from      = obj->from,
+        .to        = obj->to,
+        .piece     = { .size = 1, { obj->piece }                                 },
+        .captured  = { .size = 1, { obj->captured == ' ' ? 'Z' : obj->captured } },
+        .move_type = (Smak_MoveType)obj->movetype,
+    };
+    pb_ostream_t stream = pb_ostream_from_buffer(buf, Smak_ChessMove_size);
+    bool success        = pb_encode(&stream, Smak_ChessMove_fields, &mv);
+    size_t encoded_size = stream.bytes_written;
+    LOG_DBG("Encoded size is %u bytes", encoded_size);
+    if (success) {
+        return encoded_size;
+    } else {
+        return 0;
+    }
 }

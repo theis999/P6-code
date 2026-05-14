@@ -3,11 +3,13 @@
 
 #include <zephyr/kernel.h>
 
-enum move_type { EN_PASSANT,
+enum move_type { 
+    EN_PASSANT,
     CASTLING,
     PROMOTION,
     NORMAL,
-    MOVE_TYPE_MAX };
+    MOVE_TYPE_MAX 
+};
 
 struct smak_json_obj {
     uint64_t id;
@@ -124,7 +126,10 @@ extern const char starting_board_initializer[64];
 
 extern const char empty_board_initializer[64];
 
+
+
 void encode_smak_obj(struct smak_json_obj* obj, char* buf, size_t buf_size);
+int smak_move_to_pb(struct smak_json_obj *obj, uint8_t *buf);
 
 /* clang-format on */
 #endif
