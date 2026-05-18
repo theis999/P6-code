@@ -1,0 +1,112 @@
+menu "SMAK configuration"
+
+    config SMAK_PROD
+        bool "Build for production"
+        default n
+        help 
+            Removes hardcoded secrets from program.
+
+    menuconfig SMAK_CLIENT_CREDENTIALS_SECRET_HARDCODED
+        bool "Use a hardcoded client credential string"
+        default y
+        depends on !SMAK_PROD
+
+        if SMAK_CLIENT_CREDENTIALS_SECRET_HARDCODED
+        config SMAK_CLIENT_CREDENTIALS_SECRET_STRING
+            string "Secret for getting authorization tokens"
+            default "grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write"
+            depends on !SMAK_PROD
+        endif 
+
+    menu "SMAK network configuration"
+
+        config SMAK_SOFTAP_PROVISIONING_SEC2_USERNAME
+            string "Sec2 SoftAP provisioning username"
+            default "smakuser"
+            depends on !SMAK_PROD
+            help 
+                SoftAP provisioning username to use for salt and verifier.
+                
+        config SMAK_SOFTAP_PROVISIONING_SEC_PWD
+            string "Sec2 SoftAP provisioning password"
+            default "smakpwd"
+            depends on !SMAK_PROD
+            help 
+                SoftAP provisioning password to use for salt and verifier.
+
+        choice SMAK_TLS_CERT_BUNDLE
+            prompt "SMAK TLS certificate bundle"
+
+            config SMAK_TLS_CERT_BUNDLE_USE_ESP_CERT_BUNDLE
+                bool "Use espressif's certificate bundle"
+                default y
+                depends on MBEDTLS_CERTIFICATE_BUNDLE
+        endchoice
+
+
+        menu "SMAK HTTP"
+            config SMAK_HTTP_HOSTNAME_DOMAIN
+                string "Hostname of the SMAK cloud services"
+                default "head9x.dk"
+            
+            config SMAK_HTTP_AUTH_SUBDOMAIN
+                string "Subdomain for SMAK authorization service"
+                default "smakauth"
+
+            config SMAK_HTTP_AUTH_TOKEN_GET_URL
+                string "Url for getting auth tokens"
+                default "/application/o/token/"
+            
+            config SMAK_HTTP_DB_SUBDOMAIN
+                string "Subdomain for SMAK database service"
+                default "smakdb"
+            
+            config SMAK_HTTP_DB_GAME_POST_URL
+                string "URL for posting games"
+                default "/games"
+                
+            config SMAK_HTTP_DB_GAME_PATCH_URL
+                string "URL for patching games"
+                default "/games"
+                
+            config SMAK_HTTP_DB_MOVE_POST_URL
+                string "URL for posting moves"
+                default "/moves"
+        endmenu
+    endmenu
+      
+    
+    menu "SMAK OTA configuration"
+        
+    config SMAK_FWUP_URL
+            string "URL for SMAK firmware upgrades"
+            default "https://github.com/Geoduck7/HawkBitUI/releases/download/Main/advanced_https_ota.bin"
+            help
+                URL of SMAK firmware image downloads
+
+        config SMAK_OTA_TIMEOUT
+            int "Receive timeout for firmware download (ms)"
+            default 30000
+            help
+                Timeout for firmware download, given in milliseconds
+        
+
+        config SMAK_OTA_PARTIAL_HTTP_DOWNLOAD
+            string "Partial download of firmware over HTTP"
+            default n
+            depends on HAVE_SMAK_OTA_PARTIAL_HTTP_SUPPORT
+            help
+                Partial download of firmware over HTTP
+
+        config SMAK_OTA_HTTP_TX_BUFFER_SIZE
+            int "Size of the HTTP-request tx buffer"
+            default MBEDTLS_SSL_IN_CONTENT_LEN
+            help
+                Buffer size of the HTTP client
+        
+    endmenu
+
+
+
+
+endmenu

@@ -6,6 +6,7 @@
 #include "pb_decode.h"
 #include "pb_encode.h"
 #include "portmacro.h"
+#include "sdkconfig.h"
 #include "smak_defines.h"
 #include <complex.h>
 #include <esp_crt_bundle.h>
@@ -14,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/unistd.h>
 #include <time.h>
 
 #include <smak_util.h>
@@ -23,6 +25,7 @@
 #include <esp_timer.h>
 #include <pb.h>
 #include <smak.pb.h>
+#include <smak_http_interface.h>
 #include <smak_util_private.h>
 
 typedef int smak_err;
@@ -69,32 +72,12 @@ void test_smak_json_print(void)
                   .move_type = (const uint8_t *)move_type_strings[NORMAL] }));
 }
 
-struct smak_http_command {
-    enum {
-        SMAK_HTTP_GAME_POST,
-        SMAK_HTTP_GAME_PATCH,
-        SMAK_HTTP_MOVE_POST,
-        SMAK_HTTP_AUTH_TOKEN_GET,
-        SMAK_HTTP_USERS_GET,
-    } cmd_type;
-    union {
-        struct {
-            uint8_t *buf;
-            size_t recv_buf_size;
-        } recv;
-        struct {
-            uint8_t *buf;
-            size_t payload_buf_size;
-        } payload;
-    } buffer;
-};
-
 static char *endpoints[] = {
-    [SMAK_HTTP_MOVE_POST]      = "/moves",
-    [SMAK_HTTP_GAME_POST]      = "/games",
-    [SMAK_HTTP_GAME_PATCH]     = "/games",
-    [SMAK_HTTP_AUTH_TOKEN_GET] = "/application/o/token/",
-    [SMAK_HTTP_USERS_GET]      = "/users"
+    [SMAK_HTTP_MOVE_POST]      = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_DB_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_DB_MOVE_POST_URL),
+    [SMAK_HTTP_GAME_POST]      = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_DB_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_DB_GAME_POST_URL),
+    [SMAK_HTTP_GAME_PATCH]     = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_DB_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_DB_GAME_PATCH_URL),
+    [SMAK_HTTP_AUTH_TOKEN_GET] = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_AUTH_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_AUTH_TOKEN_GET_URL),
+    [SMAK_HTTP_USERS_GET]      = NULL
 };
 
 static EventGroupHandle_t token_event_group = { 0 };
@@ -104,6 +87,8 @@ static EventGroupHandle_t token_event_group = { 0 };
 static const char secret[] = secret_str;
 
 static bool token_valid = false;
+
+char *auth_url = CONFIG_SMAK_HTTP_AUTH_SUBDOMAIN "." CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN "" CONFIG_SMAK_HTTP_AUTH_TOKEN_GET_URL;
 
 struct {
     char buf[4096];
@@ -454,7 +439,6 @@ void call_post(void)
 
     smak_http_post_move(3, &mv, 1);
 }
-// curl -d '{"id": "1", "ply_number": "3", "move_type": "normal", "piece_moved": "P", "piece_captured": "Z", "from_square": "52", "to_square": "36" }' https://smakdb.head9x.dk/moves -H 'Content-Type: application/json' -H "Authorization: Bearer ${TOKEN}"
 
 #define TOKEN_TIMER_BIT BIT(0)
 static EventGroupHandle_t timer_event_group = { 0 };
@@ -502,3 +486,55 @@ TaskFunction_t get_smak_token_task(void)
 {
     return smak_token_get_task;
 };
+
+#define SMAK_CONNECTIVITY_TASK_STACK_SIZE_REQUIRED 32784
+
+QueueHandle_t smak_http_req_queue = { 0 };
+
+QueueHandle_t init_smak_http_req_queue()
+{
+
+    smak_http_req_queue = xQueueCreate(8, sizeof(struct smak_http_command));
+
+    return smak_http_req_queue;
+}
+
+void smak_connectivity_task(void *arg)
+{
+    SMAK_LOGD("Task starting");
+
+    if (!smak_http_req_queue) {
+        vTaskDelete(NULL);
+    }
+
+    smak_http_command_t cmd = { 0 };
+
+    while (1) {
+        xQueueReceive(smak_http_req_queue, &cmd, portMAX_DELAY);
+
+        switch (cmd.cmd_type) {
+        case SMAK_HTTP_MOVE_POST: {
+            smak_http_post_move(cmd.game_id, &cmd.data.mv, 0);
+            break;
+        }
+        case SMAK_HTTP_GAME_POST: {
+
+            break;
+        }
+        case SMAK_HTTP_GAME_PATCH: {
+            break;
+        }
+        case SMAK_HTTP_AUTH_TOKEN_GET: {
+            if (!(smak_http_auth_token_get(auth_url))) {
+                SMAK_LOGW("smak_http_auth_token_get() failed");
+            }
+            break;
+        }
+        case SMAK_HTTP_USERS_GET:
+            break;
+        default:
+            SMAK_LOGW("Unknown SMAK HTTP command type (%04X)", cmd.cmd_type);
+            break;
+        }
+    }
+}

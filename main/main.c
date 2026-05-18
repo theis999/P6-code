@@ -13,7 +13,6 @@
 #include "usb/cdc_host_types.h"
 #include "usb/usb_host.h"
 #include "usb/usb_types_cdc.h"
-#include "xtensa_context.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -24,12 +23,10 @@
 #include <smak.pb.h>
 
 #include <smak_defines.h>
+#include <smak_http_interface.h>
 #include <smak_util.h>
 
-extern void smak_wifi_prov_main(void);
 extern void softap_main(void);
-extern char *smak_http_auth_token_get(const char *host);
-extern void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size);
 
 #define USB_HOST_PRIO (20)
 #define TX_STRING ("smak test string")
@@ -70,13 +67,8 @@ static inline int get_free_slot(void)
     return -1;
 }
 
-uint8_t json_buffer[512]                         = { 0 };
+[[maybe_unused]] uint8_t json_buffer[512]        = { 0 };
 [[maybe_unused]] static size_t json_buffer_index = { 0 };
-
-struct smak_pb_ctx {
-    char buffer[SMAK_CHESS_MOVE_SIZE];
-    size_t msg_size;
-};
 
 static bool handle_rx(const uint8_t *data, size_t data_len, void *arg)
 {
@@ -128,32 +120,9 @@ static bool handle_rx(const uint8_t *data, size_t data_len, void *arg)
         xQueueSend(send_queue, &ctx, 0);
 
         return true;
+    } else {
+        return false;
     }
-
-    return true;
-    memcpy(json_buffer, data, data_len);
-
-    // SMAK_LOGI("data_len = %u", data_len);
-
-    SMAK_LOGI("Decoding");
-    smak_chess_move_t decoded = SMAK_CHESS_MOVE_INIT_ZERO;
-    pb_istream_t istream      = pb_istream_from_buffer(json_buffer, data_len);
-    bool success              = pb_decode(&istream, SMAK_CHESS_MOVE_FIELDS, &decoded);
-    ESP_LOGI(TAG, "id = %llu, ply = %u, from = %u, to = %s, piece = %c, captured = %c, move_type = %s",
-             decoded.id, decoded.ply, decoded.from, decoded.to, decoded.piece.bytes[0], decoded.captured.bytes[0], move_type_strings[decoded.move_type]);
-    // SMAK_LOGI("Decoding done");
-
-    // if (success) {
-    //     SMAK_LOGD("Decoding successful");
-    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    //     ESP_LOGI(TAG, "id = %llu, ply = %u, from = %u, to = %s, piece = %c, captured = %c, move_type = %s",
-    //              decoded.id, decoded.ply, decoded.from, decoded.to, decoded.piece.bytes[0], decoded.captured.bytes[0], move_type_strings[decoded.move_type]);
-    //     xQueueSend(send_queue, &decoded, 0);
-    // } else {
-    //     ESP_LOGE(TAG, "Failed to decode PB object");
-    // }
-
-    return true;
 #endif
 }
 
@@ -387,22 +356,17 @@ void read_queue_task(void *arg)
 
         decoded.id = 3;
         smak_http_post_move(70, &decoded, 0);
-
-        // ESP_LOGI(__func__, "Got JSON object from queue");
-        // ESP_LOGI(__func__, "%s", buf);
     }
-    ESP_LOGI(__func__, "Task done");
+    SMAK_LOGI("Task done");
     vTaskDelete(NULL);
 }
-
-extern void call_post(void);
 
 TaskFunction_t get_smak_token_task(void);
 
 void app_main(void)
 {
     softap_main();
-    ESP_LOGI(__func__, "STACK SIZE: %d", CONFIG_MAIN_TASK_STACK_SIZE);
+    SMAK_LOGI("STACK SIZE: %d", CONFIG_MAIN_TASK_STACK_SIZE);
     vTaskDelay(5000 / portTICK_PERIOD_MS); // wifi laver finurlige ting hvis vi ikke venter lidt (måske)
 
     test_smak_json_print();

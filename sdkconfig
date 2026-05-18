@@ -927,24 +927,16 @@ CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
 # CONFIG_ESPTOOLPY_FLASHFREQ_20M is not set
 # default:
 CONFIG_ESPTOOLPY_FLASHFREQ="80m"
-# default:
 # CONFIG_ESPTOOLPY_FLASHSIZE_1MB is not set
-# default:
-CONFIG_ESPTOOLPY_FLASHSIZE_2MB=y
-# default:
+# CONFIG_ESPTOOLPY_FLASHSIZE_2MB is not set
 # CONFIG_ESPTOOLPY_FLASHSIZE_4MB is not set
-# default:
 # CONFIG_ESPTOOLPY_FLASHSIZE_8MB is not set
-# default:
-# CONFIG_ESPTOOLPY_FLASHSIZE_16MB is not set
-# default:
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
 # CONFIG_ESPTOOLPY_FLASHSIZE_32MB is not set
-# default:
 # CONFIG_ESPTOOLPY_FLASHSIZE_64MB is not set
-# default:
 # CONFIG_ESPTOOLPY_FLASHSIZE_128MB is not set
 # default:
-CONFIG_ESPTOOLPY_FLASHSIZE="2MB"
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
 # default:
 # CONFIG_ESPTOOLPY_HEADER_FLASHSIZE_UPDATE is not set
 # default:
@@ -979,6 +971,57 @@ CONFIG_PARTITION_TABLE_OFFSET=0x8000
 # default:
 CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
+
+#
+# SMAK configuration
+#
+# default:
+# CONFIG_SMAK_PROD is not set
+CONFIG_SMAK_CLIENT_CREDENTIALS_SECRET_HARDCODED=y
+# default:
+CONFIG_SMAK_CLIENT_CREDENTIALS_SECRET_STRING="grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write"
+
+#
+# SMAK network configuration
+#
+# default:
+CONFIG_SMAK_SOFTAP_PROVISIONING_SEC2_USERNAME="smakuser"
+# default:
+CONFIG_SMAK_SOFTAP_PROVISIONING_SEC_PWD="smakpwd"
+# default:
+CONFIG_SMAK_TLS_CERT_BUNDLE_USE_ESP_CERT_BUNDLE=y
+
+#
+# SMAK HTTP
+#
+# default:
+CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN="head9x.dk"
+# default:
+CONFIG_SMAK_HTTP_AUTH_SUBDOMAIN="smakauth"
+# default:
+CONFIG_SMAK_HTTP_AUTH_TOKEN_GET_URL="/application/o/token/"
+# default:
+CONFIG_SMAK_HTTP_DB_SUBDOMAIN="smakdb"
+# default:
+CONFIG_SMAK_HTTP_DB_GAME_POST_URL="/games"
+# default:
+CONFIG_SMAK_HTTP_DB_GAME_PATCH_URL="/games"
+# default:
+CONFIG_SMAK_HTTP_DB_MOVE_POST_URL="/moves"
+# end of SMAK HTTP
+# end of SMAK network configuration
+
+#
+# SMAK OTA configuration
+#
+# default:
+CONFIG_SMAK_FWUP_URL="https://github.com/Geoduck7/HawkBitUI/releases/download/Main/advanced_https_ota.bin"
+# default:
+CONFIG_SMAK_OTA_TIMEOUT=30000
+# default:
+CONFIG_SMAK_OTA_HTTP_TX_BUFFER_SIZE=16384
+# end of SMAK OTA configuration
+# end of SMAK configuration
 
 #
 # Compiler options

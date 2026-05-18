@@ -1,6 +1,7 @@
 #ifndef SMAK_INCLUDED_SMAK_UTIL_PRIVATE_H_
 #define SMAK_INCLUDED_SMAK_UTIL_PRIVATE_H_
 
+#include <smak.pb.h>
 #include <smak_util.h>
 #include <stdint.h>
 

@@ -981,6 +981,50 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# SMAK configuration
+#
+# default:
+# CONFIG_SMAK_PROD is not set
+# default:
+# CONFIG_SMAK_CLIENT_CREDENTIALS_SECRET_HARDCODED is not set
+
+#
+# SMAK network configuration
+#
+# default:
+CONFIG_SMAK_TLS_CERT_BUNDLE_USE_ESP_CERT_BUNDLE=y
+
+#
+# SMAK HTTP
+#
+# default:
+CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN="head9x.dk"
+# default:
+CONFIG_SMAK_HTTP_AUTH_SUBDOMAIN="smakauth"
+# default:
+CONFIG_SMAK_HTTP_AUTH_TOKEN_GET_URL="/application/o/token/"
+# default:
+CONFIG_SMAK_HTTP_DB_SUBDOMAIN="smakdb"
+# default:
+CONFIG_SMAK_HTTP_DB_GAME_POST_URL="/games"
+# default:
+CONFIG_SMAK_HTTP_DB_GAME_PATCH_URL="/games"
+# end of SMAK HTTP
+# end of SMAK network configuration
+
+#
+# SMAK OTA configuration
+#
+# default:
+CONFIG_SMAK_FWUP_URL="https://github.com/Geoduck7/HawkBitUI/releases/download/Main/advanced_https_ota.bin"
+# default:
+CONFIG_SMAK_OTA_TIMEOUT=30000
+# default:
+CONFIG_SMAK_OTA_HTTP_TX_BUFFER_SIZE=16384
+# end of SMAK OTA configuration
+# end of SMAK configuration
+
+#
 # Compiler options
 #
 # default:
@@ -1080,8 +1124,6 @@ CONFIG_BT_CONTROLLER_ENABLED=y
 #
 # default:
 CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_INTERNAL=y
-# default:
-# CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL is not set
 # default:
 # CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_DEFAULT is not set
 # default:
@@ -2170,9 +2212,9 @@ CONFIG_ESP32S3_UNIVERSAL_MAC_ADDRESSES=4
 # Sleep Config
 #
 # default:
-CONFIG_ESP_SLEEP_FLASH_LEAKAGE_WORKAROUND=y
+# CONFIG_ESP_SLEEP_POWER_DOWN_FLASH is not set
 # default:
-CONFIG_ESP_SLEEP_PSRAM_LEAKAGE_WORKAROUND=y
+CONFIG_ESP_SLEEP_FLASH_LEAKAGE_WORKAROUND=y
 # default:
 CONFIG_ESP_SLEEP_MSPI_NEED_ALL_IO_PU=y
 # default:
@@ -2310,9 +2352,6 @@ CONFIG_LIBC_TIME_SYSCALL_USE_RTC_HRT=y
 CONFIG_LIBC_ASSERT_BUFFER_SIZE=200
 # end of LibC
 
-# default:
-CONFIG_STDATOMIC_S32C1I_SPIRAM_WORKAROUND=y
-
 #
 # ESP-MM: Memory Management Configurations
 #
@@ -2411,67 +2450,7 @@ CONFIG_PM_ESP_SLEEP_POWER_DOWN_CPU=y
 #
 # ESP PSRAM
 #
-CONFIG_SPIRAM=y
-
-#
-# SPI RAM config
-#
-# default:
-CONFIG_SPIRAM_MODE_QUAD=y
-# default:
-# CONFIG_SPIRAM_MODE_OCT is not set
-# default:
-CONFIG_SPIRAM_TYPE_AUTO=y
-# default:
-# CONFIG_SPIRAM_TYPE_ESPPSRAM16 is not set
-# default:
-# CONFIG_SPIRAM_TYPE_ESPPSRAM32 is not set
-# default:
-# CONFIG_SPIRAM_TYPE_ESPPSRAM64 is not set
-# default:
-CONFIG_SPIRAM_CLK_IO=30
-# default:
-CONFIG_SPIRAM_CS_IO=26
-# default:
-# CONFIG_SPIRAM_XIP_FROM_PSRAM is not set
-# default:
-# CONFIG_SPIRAM_FETCH_INSTRUCTIONS is not set
-CONFIG_SPIRAM_RODATA=y
-# default:
-# CONFIG_SPIRAM_SPEED_120M is not set
-# default:
-# CONFIG_SPIRAM_SPEED_80M is not set
-# default:
-CONFIG_SPIRAM_SPEED_40M=y
-# default:
-CONFIG_SPIRAM_SPEED=40
-# default:
-CONFIG_SPIRAM_BOOT_HW_INIT=y
-# default:
-CONFIG_SPIRAM_BOOT_INIT=y
-# default:
-CONFIG_SPIRAM_PRE_CONFIGURE_MEMORY_PROTECTION=y
-# default:
-# CONFIG_SPIRAM_IGNORE_NOTFOUND is not set
-# default:
-# CONFIG_SPIRAM_USE_MEMMAP is not set
-# default:
-# CONFIG_SPIRAM_USE_CAPS_ALLOC is not set
-# default:
-CONFIG_SPIRAM_USE_MALLOC=y
-# default:
-CONFIG_SPIRAM_MEMTEST=y
-# default:
-CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
-# default:
-# CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP is not set
-# default:
-CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=32768
-# default:
-# CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY is not set
-# default:
-# CONFIG_SPIRAM_ALLOW_NOINIT_SEG_EXTERNAL_MEMORY is not set
-# end of SPI RAM config
+# CONFIG_SPIRAM is not set
 # end of ESP PSRAM
 
 #
@@ -2936,8 +2915,6 @@ CONFIG_FATFS_TIMEOUT_MS=10000
 # default:
 CONFIG_FATFS_PER_FILE_CACHE=y
 # default:
-CONFIG_FATFS_ALLOC_PREFER_EXTRAM=y
-# default:
 # CONFIG_FATFS_USE_FASTSEEK is not set
 # default:
 CONFIG_FATFS_USE_STRFUNC_NONE=y
@@ -3065,8 +3042,6 @@ CONFIG_FREERTOS_SYSTICK_USES_SYSTIMER=y
 #
 # Extra
 #
-# default:
-CONFIG_FREERTOS_TASK_CREATE_ALLOW_EXT_MEM=y
 # end of Extra
 
 # default:
@@ -3571,8 +3546,6 @@ CONFIG_MBEDTLS_HAVE_TIME=y
 # default:
 CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC=y
 # default:
-# CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC is not set
-# default:
 # CONFIG_MBEDTLS_DEFAULT_MEM_ALLOC is not set
 # default:
 # CONFIG_MBEDTLS_CUSTOM_MEM_ALLOC is not set
@@ -3915,8 +3888,6 @@ CONFIG_MBEDTLS_PKCS1_V21=y
 # CONFIG_NVS_ASSERT_ERROR_CHECK is not set
 # default:
 # CONFIG_NVS_LEGACY_DUP_KEYS_COMPATIBILITY is not set
-# default:
-# CONFIG_NVS_ALLOCATE_CACHE_IN_SPIRAM is not set
 # default:
 # CONFIG_NVS_BDL_STACK is not set
 # default:
