@@ -1,19 +1,15 @@
-#include "esp_app_desc.h"
-#include "esp_crt_bundle.h"
-#include "esp_err.h"
-#include "esp_event.h"
-#include "esp_event_base.h"
-#include "esp_http_client.h"
-#include "esp_https_ota.h"
-#include "esp_ota_ops.h"
-#include "esp_partition.h"
-#include "esp_system.h"
-#include "freertos/idf_additions.h"
-#include "nvs_flash.h"
-#include "portmacro.h"
-#include "smak_defines.h"
-#include <assert.h>
+#include <esp_app_desc.h>
+#include <esp_crt_bundle.h>
+#include <esp_err.h>
+#include <esp_event.h>
+#include <esp_http_client.h>
+#include <esp_https_ota.h>
+#include <esp_ota_ops.h>
+#include <esp_partition.h>
+#include <esp_system.h>
+#include <nvs_flash.h>
 #include <sdkconfig.h>
+#include <smak_defines.h>
 #include <smak_ota.h>
 #include <stdint.h>
 #include <string.h>
@@ -36,6 +32,7 @@ void smak_ota_event_handler_impl(void *unused_arg, esp_event_base_t evt_base, es
     case ESP_HTTPS_OTA_UPDATE_BOOT_PARTITION:
     case ESP_HTTPS_OTA_FINISH:
     case ESP_HTTPS_OTA_ABORT:
+    default:
         break;
     }
 }
@@ -58,9 +55,7 @@ esp_err_t smak_ota_image_header_validate(esp_app_desc_t *app_info)
 
     err = esp_ota_get_partition_description(running_part, &running_app_info);
 
-    bool same_as_current = { memcmp(app_info->version,
-                                    running_app_info.version, sizeof(app_info->version))
-                             == MEMCMP_RESULT_EQUAL };
+    bool same_as_current = { memcmp(app_info->version, running_app_info.version, sizeof(app_info->version)) == MEMCMP_RESULT_EQUAL };
 
     if (same_as_current) {
         SMAK_LOGW("New firmware image has same version as current");
@@ -171,3 +166,5 @@ void smak_ota_main(void)
 
     xTaskCreate(smak_ota_task, "smak_ota_task", SMAK_OTA_TASK_STACK_SIZE, NULL, SMAK_OTA_TASK_PRIO, NULL);
 }
+
+#undef smak_ota_event_handler

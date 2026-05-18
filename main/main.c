@@ -333,8 +333,6 @@ static void usb_lib_task(void *arg)
 static bool running = true;
 void read_queue_task(void *arg)
 {
-    static uint8_t buf[512] = { 0 };
-
     while (1) {
         ESP_LOGI(__func__, "Progressing in queue read");
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -363,11 +361,17 @@ void read_queue_task(void *arg)
 
 TaskFunction_t get_smak_token_task(void);
 
+extern void smak_ota_main(void);
+
 void app_main(void)
 {
     softap_main();
     SMAK_LOGI("STACK SIZE: %d", CONFIG_MAIN_TASK_STACK_SIZE);
     vTaskDelay(5000 / portTICK_PERIOD_MS); // wifi laver finurlige ting hvis vi ikke venter lidt (måske)
+
+    smak_ota_main();
+
+    vTaskDelay(portMAX_DELAY);
 
     test_smak_json_print();
     smak_http_auth_token_get("smakauth.head9x.dk");

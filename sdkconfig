@@ -801,7 +801,6 @@ CONFIG_SECURE_BOOT_V2_PREFERRED=y
 # CONFIG_SECURE_SIGNED_APPS_NO_SECURE_BOOT is not set
 # default:
 # CONFIG_SECURE_BOOT is not set
-# default:
 # CONFIG_SECURE_FLASH_ENC_ENABLED is not set
 # default:
 CONFIG_SECURE_ROM_DL_MODE_ENABLED=y
@@ -1014,8 +1013,7 @@ CONFIG_SMAK_HTTP_DB_MOVE_POST_URL="/moves"
 #
 # SMAK OTA configuration
 #
-# default:
-CONFIG_SMAK_FWUP_URL="https://github.com/Geoduck7/HawkBitUI/releases/download/Main/advanced_https_ota.bin"
+CONFIG_SMAK_FWUP_URL="https://github.com/chrnigi/smakfwup/releases/download/1/usb.bin"
 # default:
 CONFIG_SMAK_OTA_TIMEOUT=30000
 # default:
@@ -3881,7 +3879,6 @@ CONFIG_MBEDTLS_PKCS1_V21=y
 #
 # NVS
 #
-# default:
 # CONFIG_NVS_ENCRYPTION is not set
 # default:
 # CONFIG_NVS_ASSERT_ERROR_CHECK is not set

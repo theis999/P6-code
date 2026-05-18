@@ -28,8 +28,6 @@
 #include <smak_http_interface.h>
 #include <smak_util_private.h>
 
-typedef int smak_err;
-
 extern uint64_t board_id;
 
 void test_smak_json_print(void)
@@ -72,7 +70,7 @@ void test_smak_json_print(void)
                   .move_type = (const uint8_t *)move_type_strings[NORMAL] }));
 }
 
-static char *endpoints[] = {
+static const char *endpoints[] = {
     [SMAK_HTTP_MOVE_POST]      = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_DB_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_DB_MOVE_POST_URL),
     [SMAK_HTTP_GAME_POST]      = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_DB_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_DB_GAME_POST_URL),
     [SMAK_HTTP_GAME_PATCH]     = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_DB_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_DB_GAME_PATCH_URL),
@@ -239,7 +237,7 @@ char *smak_http_auth_token_get(const char *host)
     }
     esp_http_client_config_t c_cfg = {
         .host              = host,
-        .url               = SMAK_ENDPOINT_AUTH_TOKEN_GET,
+        .url               = endpoints[SMAK_HTTP_AUTH_TOKEN_GET],
         .crt_bundle_attach = esp_crt_bundle_attach,
         .method            = HTTP_METHOD_POST,
         .event_handler     = http_auth_event_handler,
