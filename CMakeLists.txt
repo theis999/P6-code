@@ -5,8 +5,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(threads)
 
-
 list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
+list(APPEND NANOPB_OPTIONS "-C")
 include(nanopb)
 include(${ZEPHYR_BASE}/samples/net/common/common.cmake)
 

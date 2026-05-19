@@ -125,19 +125,66 @@ uint8_t pin(const char *restrict str)
     return (r | file);
 }
 
+size_t smak_new_game_msg_create(uint8_t *buf, size_t buf_size, bool value)
+{
+    if (buf_size < SMAK_MESSAGE_SIZE) {
+        LOG_ERR("Provided buffer is too small");
+        return 0;
+    }
+
+    smak_message_t *msg = &(smak_message_t) {
+        .which_board_msg                = SMAK_MESSAGE_NEW_GAME_TAG,
+        .board_msg.new_game.is_new_game = value
+    };
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(buf, buf_size);
+    bool res             = pb_encode(&ostream, SMAK_MESSAGE_FIELDS, msg);
+
+    if (!res) {
+        return 0;
+    }
+
+    size_t bytes_written = ostream.bytes_written;
+
+    return bytes_written;
+}
+
+size_t smak_chess_move_msg_create(uint8_t *buf, size_t buf_size, smak_chess_move_t *mv)
+{
+    if (buf_size < SMAK_MESSAGE_SIZE) {
+        LOG_ERR("Provided buffer is too small");
+        return 0;
+    }
+
+    smak_message_t *msg = &(smak_message_t) {
+        .which_board_msg = SMAK_MESSAGE_MOVE_TAG,
+        .board_msg.move  = *mv
+    };
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(buf, buf_size);
+    bool res             = pb_encode(&ostream, SMAK_MESSAGE_FIELDS, msg);
+    size_t bytes_written = ostream.bytes_written;
+
+    if (!res) {
+        return 0;
+    }
+
+    return bytes_written;
+}
+
 int smak_move_to_pb(struct smak_json_obj *obj, uint8_t *buf)
 {
-    Smak_ChessMove mv = {
+    smak_chess_move_t mv = {
         .id        = obj->id,
         .ply       = obj->ply,
         .from      = obj->from,
         .to        = obj->to,
         .piece     = { .size = 1, { obj->piece }                                 },
         .captured  = { .size = 1, { obj->captured == ' ' ? 'Z' : obj->captured } },
-        .move_type = (Smak_MoveType)obj->movetype,
+        .move_type = (smak_move_type_t)obj->movetype,
     };
-    pb_ostream_t stream = pb_ostream_from_buffer(buf, Smak_ChessMove_size);
-    bool success        = pb_encode(&stream, Smak_ChessMove_fields, &mv);
+    pb_ostream_t stream = pb_ostream_from_buffer(buf, SMAK_CHESS_MOVE_SIZE);
+    bool success        = pb_encode(&stream, SMAK_CHESS_MOVE_FIELDS, &mv);
     size_t encoded_size = stream.bytes_written;
     LOG_DBG("Encoded size is %u bytes", encoded_size);
     if (success) {

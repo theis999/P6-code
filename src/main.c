@@ -1,13 +1,17 @@
 #include "fsm.h"
 #include "model.h"
+#include "pb.h"
+#include "pb_decode.h"
 #include "src/smak.pb.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_fprintf.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/sys/util_macro.h>
 #include <zephyr/toolchain.h>
@@ -160,7 +164,7 @@ void test_json_cmd(const struct shell *sh)
 void test_json_cmd(const struct shell *sh)
 {
     shell_fprintf_normal(sh, "%s entry\n", __func__);
-    char buf[Smak_ChessMove_size] = { 0 };
+    char buf[SMAK_CHESS_MOVE_SIZE] = { 0 };
 
     if (!uart_is_enabled) {
         int ret = uart_irq_callback_user_data_set(uart_usb, uart_cb, (void *)buf);
@@ -189,6 +193,7 @@ static void piece_handler(const struct shell *sh, size_t argc, char **argv, void
 
     if ((strcmp(argv[0], "reset")) == 0) {
         reset_fsm(state);
+
         shell_fprintf_normal(sh, "State machine was reset\n");
     }
 
@@ -261,6 +266,86 @@ void test_handler(struct shell *sh)
 
 SHELL_CMD_REGISTER(is_test, NULL, "Check if we are in testing env",
                    test_handler);
+
+size_t smak_new_game_msg_create(uint8_t *buf, size_t buf_size, bool value);
+size_t smak_chess_move_msg_create(uint8_t *buf, size_t buf_size, smak_chess_move_t *mv);
+
+static const char *move_type_strings[] = { [EN_PASSANT] = "enpassant",
+                                           [CASTLING]   = "castling",
+                                           [PROMOTION]  = "promotion",
+                                           [NORMAL]     = "normal" };
+
+void pb_oneof_test(const struct shell *sh, int argc, char **argv)
+{
+
+    uint8_t buf[64] = { 0 };
+
+    if (argc < 2) {
+        shell_fprintf_warn(sh, "Got %d args\n", argc);
+        return;
+    }
+
+    int choice = atoi(argv[1]);
+
+    size_t bytes_written = { 0 };
+
+    switch (choice) {
+    case 1: {
+        bytes_written = smak_new_game_msg_create(buf, sizeof(buf), true);
+
+        if (bytes_written == 0) {
+            shell_fprintf_warn(sh, "Encoding failed for a new_game pb message\n");
+            return;
+        }
+        break;
+    }
+    case 2: {
+
+        smak_chess_move_t *mv = &(smak_chess_move_t) {
+            .move_type = SMAK_MOVE_TYPE_SMAKMOVE_NORMAL,
+            .captured  = { .bytes = { '0' }, .size = 1 },
+            .piece     = { .bytes = { 'p' }, .size = 1 },
+            .from      = 52,
+            .to        = 36,
+            .id        = 1,
+            .ply       = 1,
+        };
+
+        bytes_written = smak_chess_move_msg_create(buf, sizeof(buf), mv);
+
+        if (bytes_written == 0) {
+            shell_fprintf_warn(sh, "Encoding failed for a move pb message");
+            return;
+        }
+
+        break;
+    }
+    default:
+        shell_fprintf_warn(sh, "Arguments can be \"1\" og \"2\"\n");
+        return;
+    }
+
+    smak_message_t decoded = { 0 };
+    pb_istream_t istream   = pb_istream_from_buffer(buf, bytes_written);
+
+    bool res = pb_decode(&istream, SMAK_MESSAGE_FIELDS, &decoded);
+
+    if (!res) {
+        shell_fprintf_error(sh, "Decoding failed");
+        return;
+    }
+
+    if (decoded.which_board_msg == SMAK_MESSAGE_NEW_GAME_TAG) {
+        shell_fprintf_normal(sh, "Decoded a message with a \"new_game\" tag:\n %s\n", decoded.board_msg.new_game.is_new_game ? "true" : "false");
+    }
+    if (decoded.which_board_msg == SMAK_MESSAGE_MOVE_TAG) {
+        shell_fprintf_normal(sh, "Decoded a message with \"move\" tag:\n"
+                                 "id = %llu, ply = %u, from = %u, to = %u, piece = %c, captured = %c, move_type = %s\n",
+                             decoded.board_msg.move.id, decoded.board_msg.move.ply, decoded.board_msg.move.from, decoded.board_msg.move.to, decoded.board_msg.move.piece.bytes[0], decoded.board_msg.move.captured.bytes[0], move_type_strings[decoded.board_msg.move.move_type]);
+    }
+}
+
+SHELL_CMD_REGISTER(pbtest, NULL, "Test pb message", pb_oneof_test);
 
 #ifndef CONFIG_ZTEST
 
