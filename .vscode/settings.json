@@ -5,7 +5,7 @@
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=/home/christian/Desktop/usb-prov/build"
+    "--compile-commands-dir=${workspaceFolder}/build"
   ],
   "idf.customExtraVars": {},
   "clangd.path": "/home/christian/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd"

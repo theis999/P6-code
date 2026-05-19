@@ -20,9 +20,9 @@
 
 #define SMAK_ENDPOINT_URL_CREATE(subdomain, domain, url) "https://" subdomain "." domain url
 
-#define SMAK_ENDPOINT_AUTH_TOKEN_GET "https://smakauth.head9x.dk/application/o/token/"
-#define SMAK_ENDPOINT_DB_GAME_POST "https://smakdb.head9x.dk/games"
-#define SMAK_ENDPOINT_DB_MOVE_POST "https://smakdb.head9x.dk/moves"
+// #define SMAK_ENDPOINT_AUTH_TOKEN_GET "https://smakauth.head9x.dk/application/o/token/"
+// #define SMAK_ENDPOINT_DB_GAME_POST "https://smakdb.head9x.dk/games"
+// #define SMAK_ENDPOINT_DB_MOVE_POST "https://smakdb.head9x.dk/moves"
 #define SMAK_LOGD(fmt, ...) ESP_LOGD(__FILE_NAME__, "%s:%d: " fmt, __func__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
 #define SMAK_LOGI(fmt, ...) ESP_LOGI(__FILE_NAME__, "%s:%d: " fmt, __func__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
 #define SMAK_LOGW(fmt, ...) ESP_LOGW(__FILE_NAME__, "%s:%d: " fmt, __func__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)

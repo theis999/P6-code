@@ -106,7 +106,20 @@ menu "SMAK configuration"
         
     endmenu
 
+    choice SMAK_PROTOBUF_MSG_TYPE
+        prompt "Protobuffer message type to use"
+        default SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_CHESSMOVE_ONLY
 
+            config SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_CHESSMOVE_ONLY
+                bool "Smak_Chessmove PB message"
+                help
+                    Don't use this (as long as the other works)
+
+            config SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_MESSAGE
+                bool "Smak_Message PB message"
+                help
+                    Use this, (when it works), supports creating new games
+    endchoice
 
 
 endmenu

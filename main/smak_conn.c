@@ -1,7 +1,6 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "esp_system.h"
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"
 #include "pb_decode.h"
@@ -441,7 +440,7 @@ void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size)
     }
 
     esp_http_client_config_t c_cfg = {
-        .url               = SMAK_ENDPOINT_DB_MOVE_POST,
+        .url               = endpoints[SMAK_HTTP_MOVE_POST],
         .crt_bundle_attach = esp_crt_bundle_attach,
         .user_agent        = "SMAK-esp",
         .buffer_size_tx    = HTTP_BUFFER_SIZE,

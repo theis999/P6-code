@@ -333,9 +333,12 @@ static void usb_lib_task(void *arg)
     vTaskDelete(NULL);
 }
 
+bool smak_pb_msg_decode(uint8_t *buf, size_t enc_size, smak_message_t *msg_out);
+
 static bool running = true;
 void read_queue_task(void *arg)
 {
+#ifdef CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_CHESSMOVE_ONLY
     while (1) {
         ESP_LOGI(__func__, "Progressing in queue read");
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -366,6 +369,52 @@ void read_queue_task(void *arg)
         smak_http_cmd_send(&cmd);
         // smak_http_post_move(70, &decoded, 0);
     }
+
+#elif defined(CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_MESSAGE)
+    while (1) {
+        SMAK_LOGI("Progressing in queue read");
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        if (ulTaskNotifyTake(pdTRUE, 0)) {
+            break;
+        }
+        struct smak_pb_ctx ctx = { 0 };
+        xQueueReceive(send_queue, &ctx, portMAX_DELAY);
+
+        smak_message_t decoded = SMAK_MESSAGE_INIT_ZERO;
+        bool res               = smak_pb_msg_decode((uint8_t *)ctx.buffer, ctx.msg_size, &decoded);
+
+        if (!res) {
+            SMAK_LOGE("Decode failed. Reading next item in queue");
+            continue;
+        }
+
+        if (decoded.which_board_msg == SMAK_MESSAGE_MOVE_TAG) {
+            smak_http_command_t cmd = {
+                .cmd_type = SMAK_HTTP_MOVE_POST,
+                .data.mv  = decoded.board_msg.move,
+                .game_id  = decoded.board_msg.move.id
+            };
+            smak_http_cmd_send(&cmd);
+            continue;
+        }
+
+        if (decoded.which_board_msg == SMAK_MESSAGE_NEW_GAME_TAG) {
+            smak_http_command_t cmd = {
+                .cmd_type = SMAK_HTTP_GAME_POST,
+
+                .data.game_info.game = {
+                                        .gamestate = NOT_STARTED,
+                                        .board     = { .id = 0 },
+                                        }
+            };
+            smak_http_cmd_send(&cmd);
+            continue;
+        }
+    }
+#else
+#error "no protobuf messaging type given"
+
+#endif
     SMAK_LOGI("Task done");
     vTaskDelete(NULL);
 }
@@ -376,6 +425,7 @@ extern void smak_ota_main(void);
 
 void app_main(void)
 {
+
     softap_main();
     SMAK_LOGI("STACK SIZE: %d", CONFIG_MAIN_TASK_STACK_SIZE);
     vTaskDelay(5000 / portTICK_PERIOD_MS); // wifi laver finurlige ting hvis vi ikke venter lidt (måske)

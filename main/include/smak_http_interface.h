@@ -2,14 +2,26 @@
 #define SMAK_INCLUDED_SMAK_HTTP_INTERFACE_H_
 
 #include "smak_util_private.h"
+#include <sdkconfig.h>
 #include <smak.pb.h>
 #include <smak_util.h>
 #include <stdint.h>
 
+#ifdef CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_CHESSMOVE_ONLY
 struct smak_pb_ctx {
     char buffer[SMAK_CHESS_MOVE_SIZE];
     size_t msg_size;
 };
+#elif defined(CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_MESSAGE)
+
+struct smak_pb_ctx {
+    char buffer[SMAK_MESSAGE_SIZE];
+    size_t msg_size;
+};
+#else
+#error "No protobuffer message type defined in Kconfig"
+
+#endif
 
 struct smak_http_command {
     enum {

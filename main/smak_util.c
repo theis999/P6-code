@@ -1,4 +1,5 @@
 #include "cJSON.h"
+#include "pb.h"
 #include <ctype.h>
 #include <esp_log.h>
 #include <pb_decode.h>
@@ -7,6 +8,7 @@
 #include <smak_defines.h>
 #include <smak_util.h>
 #include <smak_util_private.h>
+#include <stdint.h>
 
 char *smak_json_game_obj_to_str(const struct smak_json_game_obj *in)
 {
@@ -119,4 +121,22 @@ out:
     cJSON_Delete(smak_move_obj);
     return str_out;
 #undef CHECK_NOT_NULL_OR_GOTO_OUT
+}
+
+bool smak_pb_msg_decode(uint8_t *buf, size_t enc_size, smak_message_t *msg_out)
+{
+    if (enc_size > SMAK_MESSAGE_SIZE) {
+        SMAK_LOGE("Encoded message size is too large (length is %u, max is %u)",
+                  enc_size, SMAK_MESSAGE_SIZE);
+        return false;
+    }
+
+    pb_istream_t istream = pb_istream_from_buffer(buf, enc_size);
+    bool res             = pb_decode(&istream, SMAK_MESSAGE_FIELDS, msg_out);
+
+    if (!res) {
+        SMAK_LOGE("Message could not be decoded");
+    }
+
+    return res;
 }
