@@ -5,6 +5,16 @@
 #include <esp_log.h>
 #include <sdkconfig.h>
 
+#define SMAK_MOVE_JSON_FIELD_ID "id"
+#define SMAK_MOVE_JSON_FIELD_PLY_NUMBER "ply_number"
+#define SMAK_MOVE_JSON_FIELD_FROM_SQUARE "from_square"
+#define SMAK_MOVE_JSON_FIELD_TO_SQUARE "to_square"
+#define SMAK_MOVE_JSON_FIELD_PIECE_MOVED "piece_moved"
+#define SMAK_MOVE_JSON_FIELD_PIECE_CAPTURED "piece_captured"
+#define SMAK_MOVE_JSON_FIELD_MOVE_TYPE "move_type"
+
+#define SMAK_GAME_ID_NVS_KEY "game_id"
+
 #define WIFI_CONNECTED_BIT BIT(0)
 #define WIFI_CONN_FAIL_BIT BIT(1)
 

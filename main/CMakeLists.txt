@@ -10,11 +10,12 @@ idf_component_register(
     "proto/pb_decode.c" 
     "proto/pb_encode.c"
     "smak_ota.c"
+    "smak_storage.c"
   INCLUDE_DIRS 
     "." 
     "include/" 
     "proto/" 
-    "../nanopb/"
+#    "../nanopb/"
   PRIV_REQUIRES
     "cjson"
     "esp_http_client "

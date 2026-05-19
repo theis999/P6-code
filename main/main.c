@@ -24,6 +24,7 @@
 
 #include <smak_defines.h>
 #include <smak_http_interface.h>
+#include <smak_storage.h>
 #include <smak_util.h>
 
 extern void softap_main(void);
@@ -41,6 +42,8 @@ static cdc_acm_dev_hdl_t cdc_devices[MAX_CDC_DEVICES] = { 0 };
 
 static QueueHandle_t send_queue = { 0 };
 static QueueHandle_t app_queue  = { 0 };
+
+static uint64_t current_id = 0;
 
 typedef struct {
     enum {
@@ -353,7 +356,15 @@ void read_queue_task(void *arg)
                   decoded.id, decoded.ply, decoded.from, decoded.to, decoded.piece.bytes[0], decoded.captured.bytes[0], move_type_strings[decoded.move_type]);
 
         decoded.id = 3;
-        smak_http_post_move(70, &decoded, 0);
+
+        smak_http_command_t cmd = {
+            .cmd_type = SMAK_HTTP_MOVE_POST,
+            .data.mv  = decoded,
+            .game_id  = decoded.id,
+        };
+
+        smak_http_cmd_send(&cmd);
+        // smak_http_post_move(70, &decoded, 0);
     }
     SMAK_LOGI("Task done");
     vTaskDelete(NULL);
@@ -369,12 +380,19 @@ void app_main(void)
     SMAK_LOGI("STACK SIZE: %d", CONFIG_MAIN_TASK_STACK_SIZE);
     vTaskDelay(5000 / portTICK_PERIOD_MS); // wifi laver finurlige ting hvis vi ikke venter lidt (måske)
 
-    smak_ota_main();
+    int test = smak_conn_task_init();
+    (void)test;
 
-    vTaskDelay(portMAX_DELAY);
+    // vTaskDelay(portMAX_DELAY);
 
-    test_smak_json_print();
-    smak_http_auth_token_get("smakauth.head9x.dk");
+    // smak_ota_main();
+    // vTaskDelay(portMAX_DELAY);
+
+    // test_smak_json_print();
+    // char *res = smak_http_auth_token_get("smakauth.head9x.dk");
+    // if (!res) {
+    //     SMAK_LOGE("smak_http_auth_token_get() returned NULL");
+    // }
     // call_post();
 
     app_queue = xQueueCreate(16, sizeof(app_message_t));

@@ -17,11 +17,25 @@ message Smak_ChessMove
     bytes piece = 5 [ (nanopb).max_size = 1 ];
     bytes captured = 6 [ (nanopb).max_size = 1 ];
     Smak_MoveType move_type = 7;
-    //string move_type = 7 [ (nanopb).max_size = 10 ]; // 10 is max length of our movetype strings (with NULL terminator)
+    // string move_type = 7 [ (nanopb).max_size = 10 ]; // 10 is max length of our movetype strings (with NULL terminator)
 }
 
 message BoardMove
 {
     int32 pin = 1;
     bool is_up = 2;
+}
+
+message Smak_NewGame
+{
+    bool is_new_game = 1;
+}
+
+message Smak_Message
+{
+    oneof BoardMsg
+    {
+        Smak_ChessMove move = 1;
+        Smak_NewGame new_game = 2;
+    }
 }

@@ -1,6 +1,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
+#include "esp_system.h"
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"
 #include "pb_decode.h"
@@ -26,6 +27,7 @@
 #include <pb.h>
 #include <smak.pb.h>
 #include <smak_http_interface.h>
+#include <smak_storage.h>
 #include <smak_util_private.h>
 
 extern uint64_t board_id;
@@ -60,7 +62,7 @@ void test_smak_json_print(void)
               decoded.id, decoded.ply, decoded.from, decoded.to, decoded.piece.bytes[0], decoded.captured.bytes[0], move_type_strings[decoded.move_type]);
 
     SMAK_LOGI("%s",
-              smak_json_move_obj_to_str(&(struct smak_json_move_obj_internal) {
+              smak_json_move_obj_to_str(&(struct smak_json_move_obj) {
                   .captured  = "p",
                   .piece     = "p",
                   .from      = 36,
@@ -81,25 +83,20 @@ static const char *endpoints[] = {
 static EventGroupHandle_t token_event_group = { 0 };
 
 /// @todo Gem den her i encrypted NVS
-#define secret_str "grant_type=client_credentials&client_id=jYUa19dg2cvF5VTpJjkLkhhDFI7FgkZhOhWg21Z4&client_secret=kS8UVJ4dmiTwe1pa1a0NLx4x2cA1mANE453y73XGntne3UGqdK7SG1JdXjYTyaDApJawpTrM7GXZJlptJuDpnAvnzJN7SzpNRUQpQhZy4jXk3QgYmHQxhMAuS5X1lsmW&scope=read write"
-static const char secret[] = secret_str;
+static const char secret[] = CONFIG_SMAK_CLIENT_CREDENTIALS_SECRET_STRING;
 
 static bool token_valid = false;
-
-char *auth_url = CONFIG_SMAK_HTTP_AUTH_SUBDOMAIN "." CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN "" CONFIG_SMAK_HTTP_AUTH_TOKEN_GET_URL;
 
 struct {
     char buf[4096];
     size_t len;
 } token_info = { 0 };
 
-static const size_t bearer_offset = sizeof("Bearer ");
+[[maybe_unused]] static const size_t bearer_offset = sizeof("Bearer ");
 
 cJSON *token_global = { 0 };
 
 static char token_global_str[4096] = { 'B', 'e', 'a', 'r', 'e', 'r', ' ', '\0' };
-
-static char *tok_start = token_global_str + bearer_offset;
 
 #define HTTP_BUFFER_SIZE 4096
 
@@ -225,7 +222,6 @@ static esp_err_t http_auth_event_handler(esp_http_client_event_t *event)
 
     return ESP_OK;
 };
-void smak_http_post_game(const char *http_url, const struct smak_json_game_obj_internal *obj);
 
 char *smak_http_auth_token_get(const char *host)
 {
@@ -318,7 +314,8 @@ static esp_err_t smak_http_event_handler_post(esp_http_client_event_t *event)
         break;
     case HTTP_EVENT_ON_FINISH:
         SMAK_LOGI("%.*s", idx, buf);
-        idx = 0;
+        buf[idx] = '\0';
+        idx      = 0;
         break;
     case HTTP_EVENT_DISCONNECTED:
         SMAK_LOGI("Disconnected");
@@ -331,13 +328,13 @@ static esp_err_t smak_http_event_handler_post(esp_http_client_event_t *event)
     return ESP_OK;
 }
 
-void smak_http_post_game(const char *http_url, const struct smak_json_game_obj_internal *obj)
+void smak_http_post_game(const struct smak_json_game_obj *obj)
 {
-    ESP_LOGI(__func__, "Posting game");
+    SMAK_LOGI("Posting game");
     static char resp_buf[HTTP_BUFFER_SIZE + 1] = { 0 };
 
     esp_http_client_config_t c_cfg = {
-        .url               = SMAK_ENDPOINT_DB_GAME_POST,
+        .url               = endpoints[SMAK_HTTP_GAME_POST],
         .crt_bundle_attach = esp_crt_bundle_attach,
         .method            = HTTP_METHOD_POST,
         .event_handler     = smak_http_event_handler_post,
@@ -349,26 +346,94 @@ void smak_http_post_game(const char *http_url, const struct smak_json_game_obj_i
 
     char *game_str = smak_json_game_obj_to_str(obj);
     if (!game_str) {
-        SMAK_LOGI("smak_json_game_obj_to_str() returned NULL");
+        SMAK_LOGE("smak_json_game_obj_to_str() returned NULL");
         return;
     }
 
     SMAK_LOGI("Content: \n%s", game_str);
-
     esp_http_client_handle_t client = esp_http_client_init(&c_cfg);
     esp_http_client_set_header(client, "Content-Type", "application/json");
-
     esp_http_client_set_header(client, "Authorization", token_global_str);
     esp_http_client_set_post_field(client, game_str, strlen(game_str));
 
     esp_http_client_perform(client);
+
+    cJSON *parsed = cJSON_Parse(resp_buf);
+    if (!parsed) {
+        SMAK_LOGE("Could not parse response JSON");
+        goto out;
+    }
+
+    cJSON *id_obj = cJSON_GetObjectItem(parsed, "id");
+    if (!id_obj) {
+        SMAK_LOGE("Could not get \"id\" field from response JSON");
+        goto free_json_resp;
+    }
+
+    uint64_t id = (uint64_t)cJSON_GetNumberValue(id_obj);
+
+    SMAK_LOGI("Received id: %llu", id);
+    SMAK_LOGI("Current NVS id: %llu", smak_gameid_current_get());
+
+    if (id == smak_gameid_current_get()) {
+        goto free_json_id;
+    }
+
+    int res = smak_gameid_store(id);
+    if (res < 0) {
+        SMAK_LOGE("Failed to save game ID");
+    }
+
+    SMAK_LOGI("Current game ID is %llu", smak_gameid_current_get());
+
+[[maybe_unused]] free_json_id:
+    cJSON_free(id_obj);
+free_json_resp:
+    cJSON_free(parsed);
+out:
+    free(game_str);
+}
+
+void smak_http_patch_game(uint64_t id, const struct smak_json_game_obj *obj)
+{
+    SMAK_LOGI("Patching game");
+    static char resp_buf[HTTP_BUFFER_SIZE + 1] = { 0 };
+
+    esp_http_client_config_t c_cfg = {
+        .url               = endpoints[SMAK_HTTP_GAME_PATCH],
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .method            = HTTP_METHOD_PATCH,
+        .event_handler     = smak_http_event_handler_post,
+        .user_data         = resp_buf,
+        .buffer_size_tx    = HTTP_BUFFER_SIZE,
+        .user_agent        = "SMAK-esp"
+    };
+
+    char *game_str = smak_json_game_obj_to_str(obj);
+    if (!game_str) {
+        SMAK_LOGE("smak_json_game_obj_to_str() returned NULL");
+        return;
+    }
+
+    SMAK_LOGI("Content: \n%s", game_str);
+    esp_http_client_handle_t client = esp_http_client_init(&c_cfg);
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+    esp_http_client_set_header(client, "Authorization", token_global_str);
+    esp_http_client_set_post_field(client, game_str, strlen(game_str));
+
+    esp_http_client_perform(client);
+
+    free(game_str);
 }
 
 void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size)
 {
+
+    SMAK_LOGI("current id in nvs: %d", smak_gameid_current_get());
+
     static char resp_buf[HTTP_BUFFER_SIZE + 1] = { 0 };
 
-    struct smak_json_move_obj_internal json_out;
+    struct smak_json_move_obj json_out;
     int res = smak_json_move_obj_internal_get_from_pb(move, pb_size, &json_out);
     if (res < 0) {
         SMAK_LOGE("smak_json_move_obj_internal_get_from_pb() failed");
@@ -409,13 +474,13 @@ void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size)
 
 void call_post(void)
 {
-    struct smak_json_game_obj_internal a = { .gamestate = WHITE_TO_MOVE, .board.id = 1 };
+    struct smak_json_game_obj a = { .gamestate = WHITE_TO_MOVE, .board.id = 1 };
 
     if (token_info.len == 0) {
         SMAK_LOGE("No token");
         return;
     }
-    smak_http_post_game(NULL, &a);
+    smak_http_post_game(&a);
     /* clang-format off */
     smak_chess_move_t mv = {
         .id        = 3,
@@ -475,7 +540,12 @@ static void smak_token_get_task(void *arg)
     while (1) {
         xEventGroupWaitBits(timer_event_group, TOKEN_TIMER_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
         SMAK_LOGI("Getting auth token");
-        smak_http_auth_token_get(NULL);
+
+        char *res = smak_http_auth_token_get(NULL);
+        if (!res) {
+            SMAK_LOGE("smak_http_auth_token_get() returned NULL");
+            return;
+        }
         SMAK_LOGD("Auth token get done");
     }
 }
@@ -501,7 +571,10 @@ void smak_connectivity_task(void *arg)
 {
     SMAK_LOGD("Task starting");
 
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
     if (!smak_http_req_queue) {
+        SMAK_LOGE("request queue not existing");
         vTaskDelete(NULL);
     }
 
@@ -510,29 +583,70 @@ void smak_connectivity_task(void *arg)
     while (1) {
         xQueueReceive(smak_http_req_queue, &cmd, portMAX_DELAY);
 
+        SMAK_LOGI("Reading from queue");
+
         switch (cmd.cmd_type) {
         case SMAK_HTTP_MOVE_POST: {
             smak_http_post_move(cmd.game_id, &cmd.data.mv, 0);
             break;
         }
         case SMAK_HTTP_GAME_POST: {
-
+            smak_http_post_game(&cmd.data.game_info.game);
             break;
         }
         case SMAK_HTTP_GAME_PATCH: {
+            smak_http_patch_game(cmd.data.game_info.id, &cmd.data.game_info.game);
             break;
         }
         case SMAK_HTTP_AUTH_TOKEN_GET: {
-            if (!(smak_http_auth_token_get(auth_url))) {
+            SMAK_LOGI("Getting auth token");
+            if (!(smak_http_auth_token_get(endpoints[SMAK_HTTP_AUTH_TOKEN_GET]))) {
                 SMAK_LOGW("smak_http_auth_token_get() failed");
             }
             break;
         }
         case SMAK_HTTP_USERS_GET:
+            SMAK_LOGW("SMAK_HTTP_USERS_GET HTTP command is not implemented");
             break;
         default:
             SMAK_LOGW("Unknown SMAK HTTP command type (%04X)", cmd.cmd_type);
             break;
         }
     }
+}
+
+void smak_http_cmd_send(smak_http_command_t *cmd)
+{
+    if (smak_http_req_queue) {
+        xQueueSend(smak_http_req_queue, cmd, 0);
+    } else {
+        SMAK_LOGE("Queue doesn't exist");
+    }
+}
+
+int smak_conn_task_init(void)
+{
+    init_smak_http_req_queue();
+    BaseType_t task_created = xTaskCreatePinnedToCore(smak_connectivity_task, "smak_connectivity_task", SMAK_CONNECTIVITY_TASK_STACK_SIZE_REQUIRED, NULL, 9, NULL, 0);
+
+    if (!task_created) {
+        SMAK_LOGE("Connectivity task could not be created");
+#if 0
+        SMAK_LOGE("Restarting");
+        esp_restart();
+#else
+        return -1;
+#endif
+    }
+
+    SMAK_LOGI("Connectivity task created");
+
+    smak_http_command_t cmd = {
+        .cmd_type = SMAK_HTTP_AUTH_TOKEN_GET,
+    };
+
+    SMAK_LOGI("Sending auth request");
+    xQueueSend(smak_http_req_queue, &cmd, portMAX_DELAY);
+
+    return 0;
 }

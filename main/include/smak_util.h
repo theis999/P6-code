@@ -2,8 +2,8 @@
 #define SMAK_INCLUDED_SMAK_UTIL_H_
 
 typedef struct smak_chess_move smak_chess_move_t;
-struct smak_json_move_obj_internal;
-struct smak_json_game_obj_internal;
+struct smak_json_move_obj;
+struct smak_json_game_obj;
 
 extern const char* smak_gamestate_strings[];
 extern const char* move_type_strings[];

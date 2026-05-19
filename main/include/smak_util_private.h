@@ -5,7 +5,7 @@
 #include <smak_util.h>
 #include <stdint.h>
 
-struct smak_json_move_obj_internal {
+struct smak_json_move_obj {
     uint64_t id;
     uint32_t ply;
     uint16_t from;
@@ -15,7 +15,7 @@ struct smak_json_move_obj_internal {
     const uint8_t* move_type;
 };
 
-struct smak_json_game_obj_internal {
+struct smak_json_game_obj {
     struct {
         uint64_t id;
     } board;
@@ -23,12 +23,12 @@ struct smak_json_game_obj_internal {
 };
 
 [[nodiscard("Return value MUST be checked to avoid NULL derefs")]]
-int smak_json_move_obj_internal_get_from_pb(smak_chess_move_t* in, size_t mv_sz, struct smak_json_move_obj_internal* out);
+int smak_json_move_obj_internal_get_from_pb(smak_chess_move_t* in, size_t mv_sz, struct smak_json_move_obj* out);
 
 [[nodiscard("Return value MUST be checked to avoid NULL derefs")]]
-char* smak_json_game_obj_to_str(const struct smak_json_game_obj_internal* in);
+char* smak_json_game_obj_to_str(const struct smak_json_game_obj* in);
 
 [[nodiscard("Return value MUST be checked to avoid NULL derefs")]]
-char* smak_json_move_obj_to_str(struct smak_json_move_obj_internal* obj);
+char* smak_json_move_obj_to_str(struct smak_json_move_obj* obj);
 
 #endif // SMAK_INCLUDED_SMAK_UTIL_PRIVATE_H_

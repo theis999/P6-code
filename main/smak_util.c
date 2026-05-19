@@ -8,7 +8,7 @@
 #include <smak_util.h>
 #include <smak_util_private.h>
 
-char *smak_json_game_obj_to_str(const struct smak_json_game_obj_internal *in)
+char *smak_json_game_obj_to_str(const struct smak_json_game_obj *in)
 {
 #define CHECK_NOT_NULL_OR_GOTO_OUT(x)            \
     if (!(x)) {                                  \
@@ -56,7 +56,7 @@ const char *smak_gamestate_strings[] = {
     [ERROR]            = "ERROR"
 };
 
-int smak_json_move_obj_internal_get_from_pb(smak_chess_move_t *in, size_t mv_sz, struct smak_json_move_obj_internal *out)
+int smak_json_move_obj_internal_get_from_pb(smak_chess_move_t *in, size_t mv_sz, struct smak_json_move_obj *out)
 {
 
     if (!in) {
@@ -76,15 +76,7 @@ int smak_json_move_obj_internal_get_from_pb(smak_chess_move_t *in, size_t mv_sz,
     return 0;
 }
 
-#define SMAK_MOVE_JSON_FIELD_ID "id"
-#define SMAK_MOVE_JSON_FIELD_PLY_NUMBER "ply_number"
-#define SMAK_MOVE_JSON_FIELD_FROM_SQUARE "from_square"
-#define SMAK_MOVE_JSON_FIELD_TO_SQUARE "to_square"
-#define SMAK_MOVE_JSON_FIELD_PIECE_MOVED "piece_moved"
-#define SMAK_MOVE_JSON_FIELD_PIECE_CAPTURED "piece_captured"
-#define SMAK_MOVE_JSON_FIELD_MOVE_TYPE "move_type"
-
-char *smak_json_move_obj_to_str(struct smak_json_move_obj_internal *obj)
+char *smak_json_move_obj_to_str(struct smak_json_move_obj *obj)
 {
 #define CHECK_NOT_NULL_OR_GOTO_OUT(x)           \
     if (!(x)) {                                 \

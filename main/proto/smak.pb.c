@@ -12,6 +12,12 @@ PB_BIND(SMAK_CHESS_MOVE, smak_chess_move_t, AUTO)
 PB_BIND(BOARD_MOVE, board_move_t, AUTO)
 
 
+PB_BIND(SMAK_NEW_GAME, smak_new_game_t, AUTO)
+
+
+PB_BIND(SMAK_MESSAGE, smak_message_t, AUTO)
+
+
 
 
 

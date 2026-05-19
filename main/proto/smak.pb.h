@@ -35,6 +35,17 @@ typedef struct board_move {
     bool is_up;
 } board_move_t;
 
+typedef struct smak_new_game {
+    bool is_new_game;
+} smak_new_game_t;
+
+typedef struct smak_message {
+    pb_size_t which_board_msg;
+    union {
+        smak_chess_move_t move;
+        smak_new_game_t new_game;
+    } board_msg;
+} smak_message_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,58 +54,88 @@ extern "C" {
 /* Helper constants for enums */
 #define _SMAK_MOVE_TYPE_MIN SMAK_MOVE_TYPE_SMAKMOVE_EN_PASSANT
 #define _SMAK_MOVE_TYPE_MAX SMAK_MOVE_TYPE_SMAKMOVE_NORMAL
-#define _SMAK_MOVE_TYPE_ARRAYSIZE ((smak_move_type_t)(SMAK_MOVE_TYPE_SMAKMOVE_NORMAL+1))
+#define _SMAK_MOVE_TYPE_ARRAYSIZE ((smak_move_type_t)(SMAK_MOVE_TYPE_SMAKMOVE_NORMAL + 1))
 
 #define smak_chess_move_t_move_type_ENUMTYPE smak_move_type_t
 
-
-
 /* Initializer values for message structs */
-#define SMAK_CHESS_MOVE_INIT_DEFAULT             {0, 0, 0, 0, {0, {0}}, {0, {0}}, _SMAK_MOVE_TYPE_MIN}
-#define BOARD_MOVE_INIT_DEFAULT                  {0, 0}
-#define SMAK_CHESS_MOVE_INIT_ZERO                {0, 0, 0, 0, {0, {0}}, {0, {0}}, _SMAK_MOVE_TYPE_MIN}
-#define BOARD_MOVE_INIT_ZERO                     {0, 0}
+#define SMAK_CHESS_MOVE_INIT_DEFAULT { 0, 0, 0, 0, { 0, { 0 } }, { 0, { 0 } }, _SMAK_MOVE_TYPE_MIN }
+#define BOARD_MOVE_INIT_DEFAULT { 0, 0 }
+#define SMAK_NEW_GAME_INIT_DEFAULT { 0 }
+#define SMAK_MESSAGE_INIT_DEFAULT           \
+    {                                       \
+        0, { SMAK_CHESS_MOVE_INIT_DEFAULT } \
+    }
+#define SMAK_CHESS_MOVE_INIT_ZERO { 0, 0, 0, 0, { 0, { 0 } }, { 0, { 0 } }, _SMAK_MOVE_TYPE_MIN }
+#define BOARD_MOVE_INIT_ZERO { 0, 0 }
+#define SMAK_NEW_GAME_INIT_ZERO { 0 }
+#define SMAK_MESSAGE_INIT_ZERO           \
+    {                                    \
+        0, { SMAK_CHESS_MOVE_INIT_ZERO } \
+    }
 
 /* Field tags (for use in manual encoding/decoding) */
-#define SMAK_CHESS_MOVE_ID_TAG                   1
-#define SMAK_CHESS_MOVE_PLY_TAG                  2
-#define SMAK_CHESS_MOVE_FROM_TAG                 3
-#define SMAK_CHESS_MOVE_TO_TAG                   4
-#define SMAK_CHESS_MOVE_PIECE_TAG                5
-#define SMAK_CHESS_MOVE_CAPTURED_TAG             6
-#define SMAK_CHESS_MOVE_MOVE_TYPE_TAG            7
-#define BOARD_MOVE_PIN_TAG                       1
-#define BOARD_MOVE_IS_UP_TAG                     2
+#define SMAK_CHESS_MOVE_ID_TAG 1
+#define SMAK_CHESS_MOVE_PLY_TAG 2
+#define SMAK_CHESS_MOVE_FROM_TAG 3
+#define SMAK_CHESS_MOVE_TO_TAG 4
+#define SMAK_CHESS_MOVE_PIECE_TAG 5
+#define SMAK_CHESS_MOVE_CAPTURED_TAG 6
+#define SMAK_CHESS_MOVE_MOVE_TYPE_TAG 7
+#define BOARD_MOVE_PIN_TAG 1
+#define BOARD_MOVE_IS_UP_TAG 2
+#define SMAK_NEW_GAME_IS_NEW_GAME_TAG 1
+#define SMAK_MESSAGE_MOVE_TAG 1
+#define SMAK_MESSAGE_NEW_GAME_TAG 2
 
 /* Struct field encoding specification for nanopb */
-#define SMAK_CHESS_MOVE_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UINT64,   id,                1) \
-X(a, STATIC,   SINGULAR, UINT32,   ply,               2) \
-X(a, STATIC,   SINGULAR, UINT32,   from,              3) \
-X(a, STATIC,   SINGULAR, UINT32,   to,                4) \
-X(a, STATIC,   SINGULAR, BYTES,    piece,             5) \
-X(a, STATIC,   SINGULAR, BYTES,    captured,          6) \
-X(a, STATIC,   SINGULAR, UENUM,    move_type,         7)
+#define SMAK_CHESS_MOVE_FIELDLIST(X, a)        \
+    X(a, STATIC, SINGULAR, UINT64, id, 1)      \
+    X(a, STATIC, SINGULAR, UINT32, ply, 2)     \
+    X(a, STATIC, SINGULAR, UINT32, from, 3)    \
+    X(a, STATIC, SINGULAR, UINT32, to, 4)      \
+    X(a, STATIC, SINGULAR, BYTES, piece, 5)    \
+    X(a, STATIC, SINGULAR, BYTES, captured, 6) \
+    X(a, STATIC, SINGULAR, UENUM, move_type, 7)
 #define SMAK_CHESS_MOVE_CALLBACK NULL
 #define SMAK_CHESS_MOVE_DEFAULT NULL
 
-#define BOARD_MOVE_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, INT32,    pin,               1) \
-X(a, STATIC,   SINGULAR, BOOL,     is_up,             2)
+#define BOARD_MOVE_FIELDLIST(X, a)        \
+    X(a, STATIC, SINGULAR, INT32, pin, 1) \
+    X(a, STATIC, SINGULAR, BOOL, is_up, 2)
 #define BOARD_MOVE_CALLBACK NULL
 #define BOARD_MOVE_DEFAULT NULL
 
+#define SMAK_NEW_GAME_FIELDLIST(X, a) \
+    X(a, STATIC, SINGULAR, BOOL, is_new_game, 1)
+#define SMAK_NEW_GAME_CALLBACK NULL
+#define SMAK_NEW_GAME_DEFAULT NULL
+
+#define SMAK_MESSAGE_FIELDLIST(X, a)                                   \
+    X(a, STATIC, ONEOF, MESSAGE, (board_msg, move, board_msg.move), 1) \
+    X(a, STATIC, ONEOF, MESSAGE, (board_msg, new_game, board_msg.new_game), 2)
+#define SMAK_MESSAGE_CALLBACK NULL
+#define SMAK_MESSAGE_DEFAULT NULL
+#define smak_message_t_board_msg_move_MSGTYPE smak_chess_move_t
+#define smak_message_t_board_msg_new_game_MSGTYPE smak_new_game_t
+
 extern const pb_msgdesc_t smak_chess_move_t_msg;
 extern const pb_msgdesc_t board_move_t_msg;
+extern const pb_msgdesc_t smak_new_game_t_msg;
+extern const pb_msgdesc_t smak_message_t_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define SMAK_CHESS_MOVE_FIELDS &smak_chess_move_t_msg
 #define BOARD_MOVE_FIELDS &board_move_t_msg
+#define SMAK_NEW_GAME_FIELDS &smak_new_game_t_msg
+#define SMAK_MESSAGE_FIELDS &smak_message_t_msg
 
 /* Maximum encoded size of messages (where known) */
-#define BOARD_MOVE_SIZE                          13
-#define PROTO_SMAK_PB_H_MAX_SIZE                 SMAK_CHESS_MOVE_SIZE
-#define SMAK_CHESS_MOVE_SIZE                     37
+#define BOARD_MOVE_SIZE 13
+#define PROTO_SMAK_PB_H_MAX_SIZE SMAK_MESSAGE_SIZE
+#define SMAK_CHESS_MOVE_SIZE 37
+#define SMAK_MESSAGE_SIZE 39
+#define SMAK_NEW_GAME_SIZE 2
 
 #ifdef __cplusplus
 } /* extern "C" */
