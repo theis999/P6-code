@@ -63,11 +63,9 @@ public class IndexModel : PageModel
         // Debug
         //System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         //System.Diagnostics.Debug.WriteLine("Response: " + response);
-       /// Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
-        Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
-
-        if (Boards == null || !Boards.Any())
-            {
+        /// Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
+        IEnumerable<Board>? Boards = Enumerable.Empty<Board>();
+        if (!boardresponse.IsSuccessStatusCode) {
             Boards = new List<Board>
             {
                 new Board
@@ -77,7 +75,23 @@ public class IndexModel : PageModel
                     games = Enumerable.Empty<Game>()
                 }
             };
-        }
+
+                return Page();
+         }
+
+         Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
+
+         if (Boards == null || !Boards.Any()) {
+            Boards = new List<Board>
+            {
+                new Board
+                {
+                    id = -1,
+                    name = "No Boards found",
+                    games = Enumerable.Empty<Game>()
+                }
+            };
+         }
 
         return Page();
     }
