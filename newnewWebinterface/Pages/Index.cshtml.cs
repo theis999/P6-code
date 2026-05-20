@@ -1,18 +1,18 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Linq;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Claims;
+using System;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using static newnewWebinterface.Pages.IndexModel;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Linq;
+
+using System.Collections;
 
 namespace newnewWebinterface.Pages;
 
@@ -64,8 +64,8 @@ public class IndexModel : PageModel
         //System.Diagnostics.Debug.WriteLine("Token: " + AccessToken);
         //System.Diagnostics.Debug.WriteLine("Response: " + response);
         /// Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
-        IEnumerable<Board>? Boards = Enumerable.Empty<Board>();
-        if (!boardresponse.IsSuccessStatusCode) {
+        if (!boardresponse.IsSuccessStatusCode)
+        {
             Boards = new List<Board>
             {
                 new Board
@@ -76,12 +76,12 @@ public class IndexModel : PageModel
                 }
             };
 
-                return Page();
-         }
+            return Page();
+        }
+        Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
 
-         Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
-
-         if (Boards == null || !Boards.Any()) {
+        if (Boards == null || !Boards.Any())
+        {
             Boards = new List<Board>
             {
                 new Board
@@ -91,7 +91,7 @@ public class IndexModel : PageModel
                     games = Enumerable.Empty<Game>()
                 }
             };
-         }
+        }
 
         return Page();
     }
