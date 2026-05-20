@@ -1,18 +1,18 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using System.Net.Http;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
+using System.Collections;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Linq;
-
-using System.Collections;
+using static newnewWebinterface.Pages.IndexModel;
 
 namespace newnewWebinterface.Pages;
 
@@ -65,6 +65,19 @@ public class IndexModel : PageModel
         //System.Diagnostics.Debug.WriteLine("Response: " + response);
        /// Games = await response.Content.ReadFromJsonAsync<IEnumerable<Game>>();
         Boards = await boardresponse.Content.ReadFromJsonAsync<IEnumerable<Board>>();
+
+        if (Boards == null || !Boards.Any())
+            {
+            Boards = new List<Board>
+            {
+                new Board
+                {
+                    id = -1,
+                    name = "No Boards found",
+                    games = Enumerable.Empty<Game>()
+                }
+            };
+        }
 
         return Page();
     }
