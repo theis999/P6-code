@@ -1,6 +1,7 @@
 #ifndef SMAK_INCLUDED_MODEL_H_
 #define SMAK_INCLUDED_MODEL_H_
 
+#include "src/smak.pb.h"
 #include <zephyr/kernel.h>
 
 enum move_type { 
@@ -126,6 +127,10 @@ extern const char starting_board_initializer[64];
 
 extern const char empty_board_initializer[64];
 
+typedef struct smak_chess_move smak_chess_move_t;
+
+size_t smak_new_game_msg_create(uint8_t *buf, size_t buf_size, bool value);
+size_t smak_chess_move_msg_create(uint8_t *buf, size_t buf_size, smak_chess_move_t *mv);
 
 
 void encode_smak_obj(struct smak_json_obj* obj, char* buf, size_t buf_size);

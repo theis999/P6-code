@@ -18,6 +18,8 @@
 
 LOG_MODULE_REGISTER(smak_main_shell, LOG_LEVEL_DBG);
 
+static const struct device *uart_usb = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_uart0));
+
 static struct chess_state *state;
 static sys_slist_t *move_check_list;
 extern struct smak_json_obj shell_obj;
@@ -55,8 +57,6 @@ void print_board_handler(const struct shell *sh)
 {
     print_board(sh, state_board_get(state));
 }
-
-static const struct device *uart_usb = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_uart0));
 
 static bool uart_is_enabled = false;
 struct uart_ctx {
@@ -163,7 +163,6 @@ void test_json_cmd(const struct shell *sh)
 #else
 void test_json_cmd(const struct shell *sh)
 {
-    shell_fprintf_normal(sh, "%s entry\n", __func__);
     char buf[SMAK_CHESS_MOVE_SIZE] = { 0 };
 
     if (!uart_is_enabled) {
@@ -188,11 +187,43 @@ void test_json_cmd(const struct shell *sh)
 }
 #endif
 
+static void smak_message_move_send(const struct shell *sh)
+{
+    char buf[SMAK_MESSAGE_SIZE] = { 0 };
+
+    smak_chess_move_t mv = {
+        .id        = shell_obj.id,
+        .ply       = shell_obj.ply,
+        .from      = shell_obj.from,
+        .to        = shell_obj.to,
+        .piece     = { .size = 1, { shell_obj.piece }                                               },
+        .captured  = { .size = 1, .bytes = { shell_obj.captured == ' ' ? 'Z' : shell_obj.captured } },
+        .move_type = (smak_move_type_t)shell_obj.movetype,
+    };
+
+    size_t enc_len = smak_chess_move_msg_create(buf, sizeof(buf), &mv);
+
+    if (enc_len == 0) {
+        shell_fprintf_error(sh, "Smak Message encoding failed");
+        return;
+    }
+
+    for (size_t i = 0; i < enc_len; i++) {
+        uart_poll_out(uart_usb, buf[i]);
+    }
+}
+
 static void piece_handler(const struct shell *sh, size_t argc, char **argv, void *data)
 {
-
     if ((strcmp(argv[0], "reset")) == 0) {
         reset_fsm(state);
+
+        uint8_t buf[SMAK_MESSAGE_SIZE * 2];
+        size_t enc_len = smak_new_game_msg_create(buf, sizeof(buf), true);
+
+        for (size_t i = 0; i < enc_len; i++) {
+            uart_poll_out(uart_usb, buf[i]);
+        }
 
         shell_fprintf_normal(sh, "State machine was reset\n");
     }
@@ -250,6 +281,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
     SHELL_CMD_ARG(reset, NULL, "Reset the state machine", piece_handler, 0, 0),
     SHELL_CMD_ARG(board, NULL, "View the board", print_board_handler, 0, 0),
     SHELL_CMD_ARG(jsontest, NULL, "JSON test", test_json_cmd, 0, 0),
+    SHELL_CMD_ARG(send, NULL, "Send PB message", smak_message_move_send, 0, 0),
     SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(smak, &sub_smak, "smak", NULL);
@@ -266,9 +298,6 @@ void test_handler(struct shell *sh)
 
 SHELL_CMD_REGISTER(is_test, NULL, "Check if we are in testing env",
                    test_handler);
-
-size_t smak_new_game_msg_create(uint8_t *buf, size_t buf_size, bool value);
-size_t smak_chess_move_msg_create(uint8_t *buf, size_t buf_size, smak_chess_move_t *mv);
 
 static const char *move_type_strings[] = { [EN_PASSANT] = "enpassant",
                                            [CASTLING]   = "castling",
