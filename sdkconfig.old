@@ -1013,13 +1013,15 @@ CONFIG_SMAK_HTTP_DB_MOVE_POST_URL="/moves"
 #
 # SMAK OTA configuration
 #
-# default:
-CONFIG_SMAK_FWUP_URL="https://github.com/Geoduck7/HawkBitUI/releases/download/Main/advanced_https_ota.bin"
+CONFIG_SMAK_FWUP_URL="https://github.com/chrnigi/smakfwup/releases/download/1/usb.bin"
 # default:
 CONFIG_SMAK_OTA_TIMEOUT=30000
 # default:
 CONFIG_SMAK_OTA_HTTP_TX_BUFFER_SIZE=16384
 # end of SMAK OTA configuration
+
+CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_CHESSMOVE_ONLY=y
+# CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_MESSAGE is not set
 # end of SMAK configuration
 
 #

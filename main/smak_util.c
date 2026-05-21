@@ -6,6 +6,7 @@
 #include <pb_encode.h>
 #include <smak.pb.h>
 #include <smak_defines.h>
+#include <smak_storage.h>
 #include <smak_util.h>
 #include <smak_util_private.h>
 #include <stdint.h>
@@ -65,7 +66,7 @@ int smak_json_move_obj_internal_get_from_pb(smak_chess_move_t *in, size_t mv_sz,
         SMAK_LOGE("NULL parameter");
         return -1;
     }
-    out->id          = in->id;
+    out->id          = smak_gameid_current_get();
     out->ply         = in->ply;
     out->from        = in->from;
     out->to          = in->to;

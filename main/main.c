@@ -4,6 +4,8 @@
 
 #include <freertos/FreeRTOS.h> // IWYU pragma: keep
 
+#include "esp_log_buffer.h"
+#include "esp_log_level.h"
 #include "freertos/idf_additions.h"
 #include "hal/gpio_types.h"
 #include "pb.h"
@@ -99,7 +101,7 @@ static bool handle_rx(const uint8_t *data, size_t data_len, void *arg)
         xQueueSend(send_queue, &json_buffer, 0);
     }
     return true;
-#else
+#elif defined(CONFIG_SMAK_PROTOBUF_MSG_TYPE_USE_SMAK_CHESSMOVE_ONLY)
 
     // [[maybe_unused]] int32_t slot = (int)arg;
     // if (sizeof(json_buffer) < data_len) {
@@ -126,6 +128,24 @@ static bool handle_rx(const uint8_t *data, size_t data_len, void *arg)
     } else {
         return false;
     }
+#else
+
+    int32_t slot = (int)arg;
+    SMAK_LOGI("Data received at slot %d", slot);
+    ESP_LOG_BUFFER_HEXDUMP(__func__, data, data_len, ESP_LOG_DEBUG);
+
+    if (data_len < SMAK_MESSAGE_SIZE) {
+        smak_pb_ctx_t ctx = {
+            .msg_size = data_len,
+        };
+        memcpy(ctx.buffer, data, data_len);
+
+        xQueueSend(send_queue, &ctx, 0);
+        return true;
+    } else {
+        return false;
+    }
+
 #endif
 }
 
@@ -389,6 +409,7 @@ void read_queue_task(void *arg)
         }
 
         if (decoded.which_board_msg == SMAK_MESSAGE_MOVE_TAG) {
+            SMAK_LOGI("Sending move");
             smak_http_command_t cmd = {
                 .cmd_type = SMAK_HTTP_MOVE_POST,
                 .data.mv  = decoded.board_msg.move,
@@ -399,12 +420,14 @@ void read_queue_task(void *arg)
         }
 
         if (decoded.which_board_msg == SMAK_MESSAGE_NEW_GAME_TAG) {
+            SMAK_LOGI("Requesting new game");
+
             smak_http_command_t cmd = {
                 .cmd_type = SMAK_HTTP_GAME_POST,
 
                 .data.game_info.game = {
                                         .gamestate = NOT_STARTED,
-                                        .board     = { .id = 0 },
+                                        .board     = { .id = 1 },
                                         }
             };
             smak_http_cmd_send(&cmd);
@@ -430,6 +453,12 @@ void app_main(void)
     SMAK_LOGI("STACK SIZE: %d", CONFIG_MAIN_TASK_STACK_SIZE);
     vTaskDelay(5000 / portTICK_PERIOD_MS); // wifi laver finurlige ting hvis vi ikke venter lidt (måske)
 
+    int storage_res = smak_storage_init();
+    if (storage_res < 0) {
+        SMAK_LOGE("smak_storage_init() failed");
+    }
+
+    SMAK_LOGI("Current game id stored in NVS is: %llu", smak_gameid_current_get());
     int test = smak_conn_task_init();
     (void)test;
 

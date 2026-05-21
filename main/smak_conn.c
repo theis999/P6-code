@@ -428,7 +428,7 @@ void smak_http_patch_game(uint64_t id, const struct smak_json_game_obj *obj)
 void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size)
 {
 
-    SMAK_LOGI("current id in nvs: %d", smak_gameid_current_get());
+    SMAK_LOGI("current id in nvs: %llu", smak_gameid_current_get());
 
     static char resp_buf[HTTP_BUFFER_SIZE + 1] = { 0 };
 
