@@ -29,6 +29,8 @@
 #define SMAK_LOGE(fmt, ...) ESP_LOGE(__FILE_NAME__, "%s:%d: " fmt, __func__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
 #define ARG_UNUSED(x) (void)x
 
+#define var_unused __attribute__((unused))
+
 #define TASK_DELETE_SELF() vTaskDelete(NULL)
 
 #endif // SMAK_INCLUDED_SMAK_DEFINES_H_

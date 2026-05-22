@@ -1,12 +1,12 @@
 
-#include "esp_err.h"
-#include "esp_log.h"
-#include "esp_netif_types.h"
-#include "esp_wifi.h"
-#include "freertos/idf_additions.h"
-#include "network_provisioning/scheme_softap.h"
-#include "nvs_flash.h"
-#include "qrcode.h"
+#include <esp_err.h>
+#include <esp_log.h>
+#include <esp_netif_types.h>
+#include <esp_wifi.h>
+#include <freertos/idf_additions.h>
+#include <network_provisioning/scheme_softap.h>
+#include <nvs_flash.h>
+#include <qrcode.h>
 #include <stdint.h>
 const char *TAG = "smak_softap_wifi_prov";
 

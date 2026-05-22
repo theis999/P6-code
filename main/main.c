@@ -1,25 +1,24 @@
-#include "driver/gpio.h"
-#include "esp_err.h"
-#include "esp_log.h"
+#include <driver/gpio.h>
+#include <esp_err.h>
+#include <esp_log.h>
 
 #include <freertos/FreeRTOS.h> // IWYU pragma: keep
 
-#include "esp_log_buffer.h"
-#include "esp_log_level.h"
-#include "freertos/idf_additions.h"
-#include "hal/gpio_types.h"
-#include "pb.h"
-#include "portmacro.h"
-#include "usb/cdc_acm_host.h"
-#include "usb/cdc_acm_host_ops.h"
-#include "usb/cdc_host_types.h"
-#include "usb/usb_host.h"
-#include "usb/usb_types_cdc.h"
 #include <assert.h>
+#include <esp_log_buffer.h>
+#include <esp_log_level.h>
+#include <freertos/idf_additions.h>
+#include <hal/gpio_types.h>
+#include <portmacro.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <usb/cdc_acm_host.h>
+#include <usb/cdc_acm_host_ops.h>
+#include <usb/cdc_host_types.h>
+#include <usb/usb_host.h>
+#include <usb/usb_types_cdc.h>
 
 #include <pb_decode.h>
 #include <smak.pb.h>
@@ -44,8 +43,6 @@ static cdc_acm_dev_hdl_t cdc_devices[MAX_CDC_DEVICES] = { 0 };
 
 static QueueHandle_t send_queue = { 0 };
 static QueueHandle_t app_queue  = { 0 };
-
-static uint64_t current_id = 0;
 
 typedef struct {
     enum {
@@ -72,8 +69,8 @@ static inline int get_free_slot(void)
     return -1;
 }
 
-[[maybe_unused]] uint8_t json_buffer[512]        = { 0 };
-[[maybe_unused]] static size_t json_buffer_index = { 0 };
+[[gnu::unused]] uint8_t json_buffer[512]        = { 0 };
+[[gnu::unused]] static size_t json_buffer_index = { 0 };
 
 static bool handle_rx(const uint8_t *data, size_t data_len, void *arg)
 {
@@ -496,9 +493,9 @@ void app_main(void)
                                USB_HOST_PRIO + 2,
                                &read_queue_handle);
 
-    // TaskHandle_t tok_task_handle = { 0 };
+    TaskHandle_t tok_task_handle = { 0 };
 
-    // task_created = xTaskCreate(get_smak_token_task(), "token_get", 32784, xTaskGetCurrentTaskHandle(), 22, &tok_task_handle);
+    task_created = xTaskCreate(get_smak_token_task(), "token_get", 32784, xTaskGetCurrentTaskHandle(), 22, &tok_task_handle);
 
     const gpio_config_t input_pin = {
         .pin_bit_mask = BIT64(APP_QUIT_PIN),

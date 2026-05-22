@@ -1,15 +1,15 @@
-#include "esp_err.h"
-#include "esp_log.h"
+#include <esp_err.h>
+#include <esp_log.h>
 
-#include "freertos/idf_additions.h"
-#include "freertos/projdefs.h"
-#include "pb_decode.h"
-#include "pb_encode.h"
-#include "portmacro.h"
-#include "sdkconfig.h"
-#include "smak_defines.h"
 #include <complex.h>
 #include <esp_crt_bundle.h>
+#include <freertos/idf_additions.h>
+#include <freertos/projdefs.h>
+#include <pb_decode.h>
+#include <pb_encode.h>
+#include <portmacro.h>
+#include <sdkconfig.h>
+#include <smak_defines.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -78,8 +78,6 @@ static const char *endpoints[] = {
     [SMAK_HTTP_AUTH_TOKEN_GET] = SMAK_ENDPOINT_URL_CREATE(CONFIG_SMAK_HTTP_AUTH_SUBDOMAIN, CONFIG_SMAK_HTTP_HOSTNAME_DOMAIN, CONFIG_SMAK_HTTP_AUTH_TOKEN_GET_URL),
     [SMAK_HTTP_USERS_GET]      = NULL
 };
-
-static EventGroupHandle_t token_event_group = { 0 };
 
 /// @todo Gem den her i encrypted NVS
 static const char secret[] = CONFIG_SMAK_CLIENT_CREDENTIALS_SECRET_STRING;
