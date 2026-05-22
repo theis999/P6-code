@@ -268,6 +268,8 @@ char *smak_http_auth_token_get(const char *host)
     strcat(token_global_str, str_val);
     SMAK_LOGD("strcat completed");
 
+    esp_http_client_cleanup(client);
+
     return token_global_str;
 }
 
@@ -340,7 +342,7 @@ void smak_http_post_game(const struct smak_json_game_obj *obj)
         .user_data         = resp_buf,
         .buffer_size_tx    = HTTP_BUFFER_SIZE,
         .user_agent        = "SMAK-esp",
-
+        .timeout_ms        = 20000
     };
 
     char *game_str = smak_json_game_obj_to_str(obj);
@@ -390,6 +392,8 @@ void smak_http_post_game(const struct smak_json_game_obj *obj)
 free_json_resp:
     cJSON_free(parsed);
 out:
+    esp_http_client_cleanup(client);
+
     free(game_str);
 }
 
@@ -405,7 +409,8 @@ void smak_http_patch_game(uint64_t id, const struct smak_json_game_obj *obj)
         .event_handler     = smak_http_event_handler_post,
         .user_data         = resp_buf,
         .buffer_size_tx    = HTTP_BUFFER_SIZE,
-        .user_agent        = "SMAK-esp"
+        .user_agent        = "SMAK-esp",
+        .timeout_ms        = 20000
     };
 
     char *game_str = smak_json_game_obj_to_str(obj);
@@ -421,6 +426,7 @@ void smak_http_patch_game(uint64_t id, const struct smak_json_game_obj *obj)
     esp_http_client_set_post_field(client, game_str, strlen(game_str));
 
     esp_http_client_perform(client);
+    esp_http_client_cleanup(client);
 
     free(game_str);
 }
@@ -446,7 +452,8 @@ void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size)
         .buffer_size_tx    = HTTP_BUFFER_SIZE,
         .event_handler     = smak_http_event_handler_post,
         .user_data         = resp_buf,
-        .method            = HTTP_METHOD_POST
+        .method            = HTTP_METHOD_POST,
+        .timeout_ms        = 20000
     };
 
     char *move_str = smak_json_move_obj_to_str(&json_out);
@@ -469,6 +476,7 @@ void smak_http_post_move(uint64_t id, smak_chess_move_t *move, size_t pb_size)
     esp_http_client_set_post_field(client, move_str, strlen(move_str));
 
     esp_http_client_perform(client);
+    esp_http_client_cleanup(client);
 }
 
 void call_post(void)
@@ -501,51 +509,20 @@ void call_post(void)
 
     smak_http_post_move(3, &mv, 1);
 }
-
-#define TOKEN_TIMER_BIT BIT(0)
-static EventGroupHandle_t timer_event_group = { 0 };
-
-static void smak_token_timer_cb(void *arg)
-{
-    if (timer_event_group) {
-        xEventGroupSetBits(timer_event_group, TOKEN_TIMER_BIT);
-    }
-}
-
 static void smak_token_get_task(void *arg)
 {
 
-    timer_event_group = xEventGroupCreate();
-
-    if (!timer_event_group) {
-        SMAK_LOGE("Event group could not be created");
-        vTaskDelete(NULL);
-    }
-
-    esp_timer_create_args_t t_args = { .callback = smak_token_timer_cb };
-    esp_timer_handle_t timer       = { 0 };
-
-    esp_err_t err = esp_timer_create(&t_args, &timer);
-
-    if (err) {
-        SMAK_LOGE("Failed to create timer");
-        vTaskDelete(NULL);
-    }
-
 #define MICROSECONDS_PER_MINUTE 30'000'000
 
-    err = esp_timer_start_periodic(timer, 1 * MICROSECONDS_PER_MINUTE / 2);
+    TickType_t last_woken_at            = { 0 };
+    const TickType_t five_mins_in_ticks = pdMS_TO_TICKS(5 * MICROSECONDS_PER_MINUTE);
 
     while (1) {
-        xEventGroupWaitBits(timer_event_group, TOKEN_TIMER_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
-        SMAK_LOGI("Getting auth token");
-
-        char *res = smak_http_auth_token_get(NULL);
-        if (!res) {
-            SMAK_LOGE("smak_http_auth_token_get() returned NULL");
-            return;
+        vTaskDelayUntil(&last_woken_at, five_mins_in_ticks);
+        char *result = smak_http_auth_token_get(endpoints[SMAK_HTTP_AUTH_TOKEN_GET]);
+        if (!result) {
+            SMAK_LOGW("Failed to get auth token");
         }
-        SMAK_LOGD("Auth token get done");
     }
 }
 
