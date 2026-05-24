@@ -3881,7 +3881,7 @@ CONFIG_MBEDTLS_PKCS1_V21=y
 #
 # NVS
 #
-# CONFIG_NVS_ENCRYPTION is not set
+CONFIG_NVS_ENCRYPTION=y
 # default:
 # CONFIG_NVS_ASSERT_ERROR_CHECK is not set
 # default:
@@ -3891,6 +3891,16 @@ CONFIG_MBEDTLS_PKCS1_V21=y
 # default:
 # CONFIG_NVS_FLASH_VERIFY_ERASE is not set
 # end of NVS
+
+#
+# NVS Security Provider
+#
+# default:
+CONFIG_NVS_SEC_KEY_PROTECT_USING_HMAC=y
+# default:
+# CONFIG_NVS_SEC_KEY_PROTECT_NONE is not set
+CONFIG_NVS_SEC_HMAC_EFUSE_KEY_ID=0
+# end of NVS Security Provider
 
 #
 # OpenThread
