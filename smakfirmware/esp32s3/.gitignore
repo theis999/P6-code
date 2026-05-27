@@ -1,0 +1,8 @@
+build/*
+./build/*
+managed_components/*
+./managed_components/*
+nanopb/*
+./nanopb/*
+.cache/*
+__cmake_systeminformation/*
